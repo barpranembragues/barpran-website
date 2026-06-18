@@ -12,7 +12,7 @@ export const SITE = {
     "Ingeniería de embragues y soluciones de transmisión de alto rendimiento. Más de 50 años desarrollando, fabricando y reconstruyendo sistemas de embrague para calle y competición.",
   url: "https://www.barpran.com.ar",
   email: "admin@barpran.com",
-  telefono: "4488-5226,
+  telefono: "4488-5226",
   whatsapp: "+54 9 11 7058 6143",
   direccion: "Buenos Aires, Argentina",
   anioFundacion: 1971,
