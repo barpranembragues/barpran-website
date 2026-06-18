@@ -10,10 +10,10 @@ export const SITE = {
   sloganUpper: "EL EMBRAGUE DEL AUTOMOVILISMO",
   descripcion:
     "Ingeniería de embragues y soluciones de transmisión de alto rendimiento. Más de 50 años desarrollando, fabricando y reconstruyendo sistemas de embrague para calle y competición.",
-  url: "https://www.barpran.com",
-  email: "ingenieria@barpran.com",
-  telefono: "+54 11 0000 0000",
-  whatsapp: "+54 9 11 0000 0000",
+  url: "https://www.barpran.com.ar",
+  email: "admin@barpran.com",
+  telefono: "4488-5226,
+  whatsapp: "+54 9 11 7058 6143",
   direccion: "Buenos Aires, Argentina",
   anioFundacion: 1971,
 } as const;
@@ -45,16 +45,16 @@ export const HERO = {
 } as const;
 
 export const STATS = [
-  { valor: "50", sufijo: "+", label: "Años de ingeniería" },
-  { valor: "0,01", sufijo: "mm", label: "Tolerancia de balanceo" },
+  { valor: "50", sufijo: "+", label: "50 años" },
+  { valor: "0,01", sufijo: "mm", label: "De Buenos Aires al Mundo Entero" },
   { valor: "100", sufijo: "%", label: "Desarrollo nacional" },
-  { valor: "360", sufijo: "°", label: "Control de calidad" },
+  { valor: "360", sufijo: "°", label: "Balcarce 84, Ramos Mejia" },
 ] as const;
 
 export const MANIFIESTO = {
   eyebrow: "Manifiesto",
   texto:
-    "No fabricamos repuestos. Fabricamos el instante en que el motor y el asfalto se entienden. Cada disco, cada platillo y cada resorte que sale de BARPRAN está calculado para transmitir todo, sin perder nada.",
+    "No fabricamos solo embragues. Fabricamos el instante en que el motor y el asfalto se entienden. Cada pieza que diseña de BARPRAN está calculada para transmitir todo, sin perder nada.",
 } as const;
 
 export const INGENIERIA = {
@@ -68,7 +68,7 @@ export const INGENIERIA = {
     {
       titulo: "Diseño y cálculo",
       texto:
-        "Modelado de par, presión y temperatura para definir el comportamiento del embrague en cada régimen de uso.",
+        "Modelado del conjunto, presión y temperatura para definir el comportamiento del embrague en cada régimen de uso.",
     },
     {
       titulo: "Mecanizado de precisión",
@@ -78,12 +78,12 @@ export const INGENIERIA = {
     {
       titulo: "Balanceo dinámico",
       texto:
-        "Equilibrado del conjunto rotante para eliminar vibraciones a alto régimen y prolongar la vida útil.",
+        "Equilibrado del conjunto para eliminar vibraciones a alto régimen y prolongar la vida útil.",
     },
     {
       titulo: "Desarrollo de fricción",
       texto:
-        "Formulación y ensayo de materiales orgánicos, cerámicos y metálicos según la aplicación.",
+        "Formulación y ensayo de materiales orgánicos, cerámicos y aceros según la aplicación.",
     },
   ],
 } as const;
@@ -99,7 +99,7 @@ export const COMPETICION = {
     { nombre: "Turismo Carretera", detalle: "Embragues multidisco de alta resistencia térmica." },
     { nombre: "Rally", detalle: "Tolerancia a impactos, polvo y cambios bruscos de tracción." },
     { nombre: "Pista / Circuito", detalle: "Respuesta inmediata y modulación precisa del pedal." },
-    { nombre: "Drag / Aceleración", detalle: "Transmisión máxima de par en largadas extremas." },
+    { nombre: "Drag / Aceleración", detalle: "Transmisión máxima  en largadas extremas." },
   ],
   cierre:
     "Cada largada es un dato. Cada vuelta, una validación. BARPRAN compite para que tu auto rinda más.",
@@ -119,7 +119,7 @@ export const PRODUCTOS = {
     },
     {
       codigo: "TD-02",
-      nombre: "Twin Disc",
+      nombre: "Bidisco",
       resumen: "Doble disco para duplicar la capacidad de par sin sacrificar manejabilidad.",
       specs: ["Alta capacidad de par", "Menor peso por superficie", "Aplicaciones turbo"],
     },
@@ -154,9 +154,9 @@ export const FABRICACION = {
   proceso: [
     { paso: "Diagnóstico", texto: "Análisis del conjunto y medición de desgaste." },
     { paso: "Mecanizado", texto: "Rectificado y recuperación de superficies de contacto." },
-    { paso: "Reemplazo", texto: "Forros, resortes y componentes de fricción nuevos." },
+    { paso: "Reemplazo", texto: "Forros, resortes y componentes de fricción." },
     { paso: "Balanceo", texto: "Equilibrado dinámico del conjunto completo." },
-    { paso: "Ensayo", texto: "Validación de par, presión y funcionamiento." },
+    { paso: "Ensayo", texto: "Validación, presión y funcionamiento." },
   ],
 } as const;
 
@@ -180,10 +180,10 @@ export const CONTACTO = {
   eyebrow: "Contacto",
   titulo: "Hablemos de\ntu próximo desarrollo",
   bajada:
-    "Para consultas técnicas, proyectos de competición o desarrollos a medida, nuestro equipo de ingeniería responde directamente.",
+    "Para consultas técnicas, proyectos de competición o desarrollos a medida, nuestro equipo responde directamente.",
 } as const;
 
 export const FOOTER = {
-  legal: `© ${new Date().getFullYear()} BARPRAN. Todos los derechos reservados.`,
+  legal: `© ${new Date().getFullYear()} BARPRAN EMBRAGUE. Todos los derechos reservados.`,
   nota: "Embragues · Transmisión · Competición · Argentina",
 } as const;
