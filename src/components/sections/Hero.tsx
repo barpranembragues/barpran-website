@@ -70,7 +70,7 @@ export default function Hero() {
         </motion.div>
 <div className="mb-12 flex justify-center">
   <Image
-    src="/logo-barpran-negro.png"
+    src="/barpran-logo-negro.png"
     alt="BARPRAN"
     width={900}
     height={300}
