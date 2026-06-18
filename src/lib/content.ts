@@ -6,8 +6,8 @@
 
 export const SITE = {
   name: "BARPRAN",
-  slogan: "El embrague del automovilismo",
-  sloganUpper: "EL EMBRAGUE DEL AUTOMOVILISMO",
+  slogan: "BARPRAN el embrague del automovilismo",
+  sloganUpper: "BARPRAN el embrague del automovilismo",
   descripcion:
     "Ingeniería de embragues y soluciones de transmisión de alto rendimiento. Más de 50 años desarrollando, fabricando y reconstruyendo sistemas de embrague para calle y competición.",
   url: "https://www.barpran.com.ar",
@@ -119,27 +119,27 @@ export const PRODUCTOS = {
   specs: ["Conducción progresiva", "Larga vida útil", "Uso diario y deportivo"],
 },
 {
-  codigo: "TD-02",
+  codigo: "BD-02",
   nombre: "Bidisco",
   resumen: "Doble disco para duplicar la capacidad de par sin sacrificar manejabilidad.",
   imagen: "/bidisco.png",
   specs: ["Alta capacidad de par", "Menor peso por superficie", "Aplicaciones turbo"],
 },
 {
-  codigo: "ML-03",
+  codigo: "MD-03",
   nombre: "Multidisco",
   resumen: "Máxima transmisión en mínimo diámetro. La referencia de la competición.",
   imagen: "/multidisco.png",
   specs: ["Reducción de inercia", "Respuesta inmediata", "Alta resistencia térmica"],
 },
     {
-      codigo: "RC-04",
+      codigo: "EC-04",
       nombre: "Embragues de competición",
       resumen: "Conjuntos racing desarrollados para las disciplinas más demandantes.",
       specs: ["Materiales cerámicos / metálicos", "Modulación de pedal", "Setup por disciplina"],
     },
     {
-      codigo: "SP-05",
+      codigo: "AP-05",
       nombre: "Aplicaciones especiales",
       resumen: "Desarrollo a medida para proyectos únicos, clásicos y maquinaria especial.",
       specs: ["Ingeniería inversa", "Fabricación a pedido", "Asesoramiento técnico"],
