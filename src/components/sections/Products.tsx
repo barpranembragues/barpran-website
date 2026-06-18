@@ -79,6 +79,12 @@ export default function Products() {
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -24 }}
                 transition={{ duration: 0.5, ease: EASE_RACE }}
+                style={{
+  backgroundImage: `linear-gradient(90deg, rgba(10,10,10,0.96) 0%, rgba(10,10,10,0.85) 45%, rgba(10,10,10,0.35) 100%), url(${item.imagen})`,
+  backgroundSize: "cover",
+  backgroundPosition: "center center",
+  backgroundRepeat: "no-repeat",
+}}
                 className="relative flex h-full flex-col justify-between p-8 md:p-12"
               >
                 <div>
