@@ -112,23 +112,26 @@ export const PRODUCTOS = {
   titulo: "Un embrague para\ncada exigencia",
   items: [
     {
-      codigo: "MD-01",
-      nombre: "Monodisco",
-      resumen: "El equilibrio perfecto entre confort y rendimiento para calle y uso intensivo.",
-      specs: ["Conducción progresiva", "Larga vida útil", "Uso diario y deportivo"],
-    },
-    {
-      codigo: "TD-02",
-      nombre: "Bidisco",
-      resumen: "Doble disco para duplicar la capacidad de par sin sacrificar manejabilidad.",
-      specs: ["Alta capacidad de par", "Menor peso por superficie", "Aplicaciones turbo"],
-    },
-    {
-      codigo: "ML-03",
-      nombre: "Multidisco",
-      resumen: "Máxima transmisión en mínimo diámetro. La referencia de la competición.",
-      specs: ["Reducción de inercia", "Respuesta inmediata", "Alta resistencia térmica"],
-    },
+  codigo: "MD-01",
+  nombre: "Monodisco",
+  resumen: "El equilibrio perfecto entre confort y rendimiento para calle y uso intensivo.",
+  imagen: "/monodisco.png",
+  specs: ["Conducción progresiva", "Larga vida útil", "Uso diario y deportivo"],
+},
+{
+  codigo: "TD-02",
+  nombre: "Bidisco",
+  resumen: "Doble disco para duplicar la capacidad de par sin sacrificar manejabilidad.",
+  imagen: "/bidisco.png",
+  specs: ["Alta capacidad de par", "Menor peso por superficie", "Aplicaciones turbo"],
+},
+{
+  codigo: "ML-03",
+  nombre: "Multidisco",
+  resumen: "Máxima transmisión en mínimo diámetro. La referencia de la competición.",
+  imagen: "/multidisco.png",
+  specs: ["Reducción de inercia", "Respuesta inmediata", "Alta resistencia térmica"],
+},
     {
       codigo: "RC-04",
       nombre: "Embragues de competición",
