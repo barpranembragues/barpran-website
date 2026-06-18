@@ -2,6 +2,7 @@
 
 import { motion, useScroll, useTransform } from "framer-motion";
 import { useRef } from "react";
+import Image from "next/image";
 import { HERO } from "@/lib/content";
 import { EASE_RACE } from "@/lib/motion";
 import ClutchDisc from "@/components/ui/ClutchDisc";
@@ -67,7 +68,16 @@ export default function Hero() {
             {HERO.eyebrow}
           </span>
         </motion.div>
-
+<div className="mb-10">
+  <Image
+    src="/logo-barpran-light.png"
+    alt="BARPRAN"
+    width={380}
+    height={120}
+    priority
+    className="h-auto w-[280px] md:w-[380px]"
+  />
+</div>
         <h1 className="display text-bone">
           {HERO.titulo.map((line, i) => (
             <span key={i} className="block overflow-hidden">
