@@ -68,14 +68,14 @@ export default function Hero() {
             {HERO.eyebrow}
           </span>
         </motion.div>
-<div className="mb-10">
+<div className="mb-12 flex justify-center">
   <Image
-    src="/logo-barpran-light.png"
+    src="/logo-barpran.png"
     alt="BARPRAN"
-    width={380}
-    height={120}
+    width={900}
+    height={300}
     priority
-    className="h-auto w-[280px] md:w-[380px]"
+    className="h-auto w-[500px] md:w-[800px]"
   />
 </div>
         <h1 className="display text-bone">
