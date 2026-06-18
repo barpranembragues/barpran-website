@@ -70,12 +70,12 @@ export default function Hero() {
         </motion.div>
 <div className="mb-12 flex justify-center">
   <Image
-    src="/barpran-logo-negro.png"
+    src="/barpran-logo-negro2.png"
     alt="BARPRAN"
     width={900}
     height={300}
     priority
-    className="h-auto w-[500px] md:w-[800px]"
+    className="h-auto w-[200px] md:w-[400px]"
   />
 </div>
         <h1 className="display text-bone">
