@@ -29,7 +29,7 @@ export const NAV = [
 
 export const HERO = {
   eyebrow: "Desde 1971 · Argentina",
-  titulo: ["EL EMBRAGUE", "DEL AUTOMOVILISMO"],
+  titulo: ["BARPRAN", "EL EMBRAGUE DEL AUTOMOVILISMO"],
   bajada:
     "Diseñamos el punto exacto donde la potencia se convierte en tracción. Embragues de competición, transmisión de alto rendimiento e ingeniería de precisión nacida en la pista.",
   ctaPrimario: { label: "Conocé la ingeniería", href: "#ingenieria" },
