@@ -187,6 +187,6 @@ export const CONTACTO = {
 } as const;
 
 export const FOOTER = {
-  legal: `© ${new Date().getFullYear()} BARPRAN EMBRAGUE. Todos los derechos reservados.`,
+  legal: `© ${new Date().getFullYear()} BARPRAN EMBRAGUES. Todos los derechos reservados.`,
   nota: "Embragues · Transmisión · Competición · Argentina",
 } as const;
