@@ -60,8 +60,10 @@ export default function Header() {
               </a>
             ))}
             <a
-              href="#contacto"
-              className="skewed border border-barpran/60 bg-barpran/10 px-5 py-2 text-bone transition-colors hover:bg-barpran"
+  href="https://wa.me/5491170586143?text=Hola%20BARPRAN%2C%20quiero%20hacer%20una%20consulta"
+  target="_blank"
+  rel="noopener noreferrer"
+  className="skewed border border-barpran/60 bg-barpran/10 px-5 py-2 text-bone transition-colors hover:bg-barpran"
             >
               <span className="block font-mono text-[0.72rem] uppercase tracking-mega">
                 Contacto
