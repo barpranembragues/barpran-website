@@ -195,54 +195,54 @@ export const FOOTER = {
 } as const;
 
 export type ShopProduct = {
-    id: string;
-    nombre: string;
-    imagen: string;
-    precio: string;
-    descripcion: string;
-    incluye: string[];
-    equivalencias: string[];
-    checkoutUrl: string;
+  id: string;
+  nombre: string;
+  imagen: string;
+  precio: string;
+  descripcion: string;
+  incluye: string[];
+  equivalencias: string[];
+  checkoutUrl: string;
 };
 
 export const SHOP_PRODUCTS: ShopProduct[] = [
   {
-        id: "kit-monodisco-competicion-1",
-        nombre: "Kit Monodisco Competición — Línea Sport",
-        imagen: "/kit-monodisco-1.png",
-        precio: "$000.000",
-        descripcion: "Kit monodisco BARPRAN desarrollado para uso en competición. Alta resistencia térmica y progresividad de pedal optimizada para circuito y rally.",
-        incluye: ["Placa de presión", "Disco de embrague", "Rulemán de empuje"],
-        equivalencias: ["Chevrolet Corsa", "Chevrolet Celta", "Chevrolet Fun", "Fiat Uno"],
-        checkoutUrl: "https://link.mercadopago.com.ar/placeholder-1",
+    id: "kit-monodisco-5-pastillas",
+    nombre: "Kit Monodisco 5 Pastillas",
+    imagen: "/kit-monodisco-5-pastillas.jpg",
+    precio: "$000.000",
+    descripcion: "Kit monodisco BARPRAN de máxima capacidad de par. Disco de 5 pastillas metalocerámicas para aplicaciones de alta exigencia en competición federada.",
+    incluye: ["Placa de presión", "Disco 5 pastillas", "Rulemán de empuje"],
+    equivalencias: ["Chevrolet Corsa", "Chevrolet Celta", "Chevrolet Fun", "Fiat Uno"],
+    checkoutUrl: "https://link.mercadopago.com.ar/placeholder-1",
   },
   {
-        id: "kit-monodisco-competicion-2",
-        nombre: "Kit Monodisco Competición — Línea Track",
-        imagen: "/kit-monodisco-2.png",
-        precio: "$000.000",
-        descripcion: "Conjunto monodisco de alto rendimiento para aplicaciones de pista. Material de fricción cerámico con modulación de punta para largadas explosivas.",
-        incluye: ["Placa de presión reforzada", "Disco cerámico de competición", "Rulemán de alta carga"],
-        equivalencias: ["Volkswagen Gol", "Volkswagen Polo", "Volkswagen Fox", "Seat Ibiza"],
-        checkoutUrl: "https://link.mercadopago.com.ar/placeholder-2",
+    id: "kit-monodisco-4-pastillas",
+    nombre: "Kit Monodisco 4 Pastillas",
+    imagen: "/kit-monodisco-4-pastillas.jpg",
+    precio: "$000.000",
+    descripcion: "Kit monodisco BARPRAN con disco de 4 pastillas metalocerámicas. Equilibrio ideal entre agarre y modulación para pista y rally.",
+    incluye: ["Placa de presión", "Disco 4 pastillas", "Rulemán de empuje"],
+    equivalencias: ["Volkswagen Gol", "Volkswagen Polo", "Volkswagen Fox", "Seat Ibiza"],
+    checkoutUrl: "https://link.mercadopago.com.ar/placeholder-2",
   },
   {
-        id: "kit-monodisco-competicion-3",
-        nombre: "Kit Monodisco Competición — Línea Racing",
-        imagen: "/kit-monodisco-3.png",
-        precio: "$000.000",
-        descripcion: "El kit de máxima performance de la línea monodisco BARPRAN. Desarrollado para competición federada con materiales y tolerancias de nivel profesional.",
-        incluye: ["Placa de presión racing", "Disco metalocerámico", "Rulemán de precisión", "Kit de montaje"],
-        equivalencias: ["Fiat Palio", "Fiat Siena", "Peugeot 206", "Peugeot 207"],
-        checkoutUrl: "https://link.mercadopago.com.ar/placeholder-3",
+    id: "kit-monodisco-3-pastillas",
+    nombre: "Kit Monodisco 3 Pastillas",
+    imagen: "/kit-monodisco-3-pastillas.jpg",
+    precio: "$000.000",
+    descripcion: "Kit monodisco BARPRAN con disco de 3 pastillas metalocerámicas. Mayor progresividad de pedal, ideal para competición en categorías reglamentadas.",
+    incluye: ["Placa de presión", "Disco 3 pastillas", "Rulemán de empuje"],
+    equivalencias: ["Fiat Palio", "Fiat Siena", "Peugeot 206", "Peugeot 207"],
+    checkoutUrl: "https://link.mercadopago.com.ar/placeholder-3",
   },
-  ];
+];
 
 export const TIENDA = {
-    id: "tienda",
-    numero: "07",
-    eyebrow: "Tienda Competición",
-    titulo: "Kits monodisco\nBARPRAN racing",
-    bajada:
-          "Kits monodisco BARPRAN para aplicaciones de alto rendimiento. Seleccioná tu kit y comprá directo o consultá por WhatsApp.",
+  id: "tienda",
+  numero: "07",
+  eyebrow: "Tienda Competición",
+  titulo: "Kits monodisco\nBARPRAN racing",
+  bajada:
+    "Kits monodisco BARPRAN para aplicaciones de alto rendimiento. Seleccioná tu kit y comprá directo o consultá por WhatsApp.",
 } as const;
