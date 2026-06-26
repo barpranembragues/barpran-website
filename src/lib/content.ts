@@ -97,9 +97,9 @@ export const COMPETICION = {
     "Lo que aprendemos compitiendo lo trasladamos a cada producto de serie. La pista es nuestro laboratorio más exigente.",
   disciplinas: [
     { nombre: "Turismo Carretera", detalle: "Embragues multidisco de alta resistencia térmica." },
-    { nombre: "Rally", detalle: "Tolerancia a impactos, polvo y cambios bruscos de tracción." },
+    { nombre: "Rally / Track day", detalle: "Tolerancia a impactos, polvo y cambios bruscos de tracción." },
     { nombre: "Pista / Circuito", detalle: "Respuesta inmediata y modulación precisa del pedal." },
-    { nombre: "Drag / Aceleración", detalle: "Transmisión máxima  en largadas extremas." },
+    { nombre: "Drag / Drift ", detalle: "Transmisión máxima  en largadas extremas." },
   ],
   cierre:
     "Cada largada es un dato. Cada vuelta, una validación. BARPRAN compite para que tu auto rinda más.",
@@ -114,14 +114,14 @@ export const PRODUCTOS = {
     {
   codigo: "MD-01",
   nombre: "Monodisco",
-  resumen: "El equilibrio perfecto entre confort y rendimiento para calle y uso intensivo.",
+  resumen: "El equilibrio perfecto entre confort, rendimiento para calle y uso intensivo.",
   imagen: "/monodisco.png",
   specs: ["Conducción progresiva", "Larga vida útil", "Uso diario y deportivo"],
 },
 {
   codigo: "BD-02",
   nombre: "Bidisco",
-  resumen: "Doble disco para duplicar la capacidad de par sin sacrificar manejabilidad.",
+  resumen: "Doble disco para duplicar la capacidad del conjunto sin sacrificar manejabilidad.",
   imagen: "/bidisco.png",
   specs: ["Alta capacidad de par", "Menor peso por superficie", "Aplicaciones turbo"],
 },
@@ -144,7 +144,7 @@ export const PRODUCTOS = {
       nombre: "Aplicaciones especiales",
       resumen: "Desarrollo a medida para proyectos únicos, clásicos y maquinaria especial.",
       imagen: "/multidisco.png",
-      specs: ["Ingeniería inversa", "Fabricación a pedido", "Asesoramiento técnico"],
+      specs: ["Ingeniería inversa", "Fabricación a pedido", "AGRO"],
     },
   ],
 } as const;
@@ -153,7 +153,7 @@ export const FABRICACION = {
   id: "fabricacion",
   numero: "04",
   eyebrow: "Fabricación y reconstrucción",
-  titulo: "Fabricamos nuevo.\nReconstruimos como nuevo.",
+  titulo: "Fabricamos nuevo.\nReconstruimos mejor que nuevo.",
   bajada:
     "Una planta integral: del bloque de material al embrague terminado. Y un proceso de reconstrucción que devuelve al conjunto sus especificaciones originales —o las mejora.",
   proceso: [
@@ -161,7 +161,7 @@ export const FABRICACION = {
     { paso: "Mecanizado", texto: "Rectificado y recuperación de superficies de contacto." },
     { paso: "Reemplazo", texto: "Forros, resortes y componentes de fricción." },
     { paso: "Balanceo", texto: "Equilibrado dinámico del conjunto completo." },
-    { paso: "Ensayo", texto: "Validación, presión y funcionamiento." },
+    { paso: "Prueba", texto: "Test de validación, presión y funcionamiento." },
   ],
 } as const;
 
@@ -214,7 +214,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     descripcion: "Kit monodisco BARPRAN de máxima capacidad de par. Disco de 5 pastillas ceramicas para aplicaciones de alta exigencia en competición federada.",
     incluye: ["Placa de presión", "Disco 5 pastillas", "Rulemán de empuje"],
     equivalencias: ["VW Vento", "Vw Bora", "Vw Passat", "Y mas"],
-    checkoutUrl: "https://mpago.la/2JrmBJT",
+    checkoutUrl: "https://mpago.la/2nRXRRo",
   },
   {
     id: "kit-monodisco-4-pastillas",
@@ -224,7 +224,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     descripcion: "Kit monodisco BARPRAN con disco de 4 pastillas ceramicas. Equilibrio ideal entre agarre y modulación para pista y rally.",
     incluye: ["Placa de presión", "Disco 4 pastillas", "Rulemán de empuje"],
     equivalencias: ["Volkswagen Gol", "Volkswagen Voyage", "Volkswagen Fox", "Y mas"],
-    checkoutUrl: "https://mpago.la/1oufFnn",
+    checkoutUrl: "https://mpago.la/1w7dkeh",
   },
   {
     id: "kit-monodisco-3-pastillas",
@@ -234,7 +234,7 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     descripcion: "Kit monodisco BARPRAN con disco de 3 pastillas ceramicas. Mayor progresividad de pedal, ideal para competición en categorías reglamentadas.",
     incluye: ["Placa de presión", "Disco 3 pastillas", "Rulemán de empuje"],
     equivalencias: ["Tipo Fiat Uno", "Y mas"],
-    checkoutUrl: "https://mpago.la/29XZ8kw",
+    checkoutUrl: "https://mpago.la/1isPwSP",
   },
 ];
 
@@ -242,7 +242,7 @@ export const TIENDA = {
   id: "tienda",
   numero: "07",
   eyebrow: "Tienda Competición",
-  titulo: "Kits monodisco\nBARPRAN racing",
+  titulo: "Kits monodisco\nBARPRAN competición",
   bajada:
     "Kits monodisco BARPRAN para aplicaciones de alto rendimiento. Seleccioná tu kit y comprá directo o consultá por WhatsApp.",
 } as const;
