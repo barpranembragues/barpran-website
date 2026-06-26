@@ -68,16 +68,6 @@ export default function Hero() {
             {HERO.eyebrow}
           </span>
         </motion.div>
-<div className="mb-12 flex justify-center">
-  <Image
-    src="/barpran-logo-negro2.png"
-    alt="BARPRAN"
-    width={900}
-    height={300}
-    priority
-    className="h-auto w-[200px] md:w-[400px]"
-  />
-</div>
         <h1 className="display text-bone">
           {HERO.titulo.map((line, i) => (
             <span key={i} className="block overflow-hidden">
