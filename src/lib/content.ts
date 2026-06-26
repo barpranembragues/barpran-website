@@ -136,12 +136,14 @@ export const PRODUCTOS = {
       codigo: "EC-04",
       nombre: "Embragues de competición",
       resumen: "Conjuntos racing desarrollados para las disciplinas más demandantes.",
+      imagen: "/multidisco.png",
       specs: ["Materiales cerámicos / metálicos", "Modulación de pedal", "Setup por disciplina"],
     },
     {
       codigo: "AP-05",
       nombre: "Aplicaciones especiales",
       resumen: "Desarrollo a medida para proyectos únicos, clásicos y maquinaria especial.",
+      imagen: "/multidisco.png",
       specs: ["Ingeniería inversa", "Fabricación a pedido", "Asesoramiento técnico"],
     },
   ],
@@ -174,6 +176,7 @@ export const HISTORIA = {
     { anio: "1998", titulo: "Entrada al automovilismo", texto: "Embragues BARPRAN debutan en la competición argentina." },
     { anio: "2010", titulo: "Tecnología multidisco", texto: "Desarrollo de conjuntos racing de mínima inercia." },
     { anio: "2024", titulo: "Ingeniería sin límites", texto: "Más de 50 años transmitiendo potencia, en todo el país." },
+    { anio: "2026", titulo: "Lideres en Latinoamerica", texto: "Estandar y Competicion" },
   ],
 } as const;
 
