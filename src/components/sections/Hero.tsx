@@ -21,6 +21,17 @@ export default function Hero() {
 
   return (
     <section ref={ref} id="hero" className="relative flex min-h-[100svh] flex-col overflow-hidden">
+      <div className="absolute inset-0 z-0">
+  <Image
+    src="/carrera.png"
+    alt=""
+    fill
+    priority
+    className="object-cover object-center opacity-25 blur-sm scale-105"
+  />
+  <div className="absolute inset-0 bg-gradient-to-r from-carbon via-carbon/85 to-carbon/45" />
+  <div className="absolute inset-0 bg-black/35" />
+</div>
       {/* ── Fondo cinematográfico ──
           Para usar tu propio video, descomentá el <video> y dejá tu archivo
           en /public/hero.mp4 (+ /public/hero-poster.jpg). */}
@@ -56,7 +67,7 @@ export default function Hero() {
       </div>
 
       {/* Contenido */}
-      <motion.div style={{ y, opacity }} className="frame relative flex flex-1 flex-col justify-center pt-28 pb-32">
+     <motion.div style={{ y, opacity }} className="frame relative z-10 flex flex-1 flex-col justify-center pt-28 pb-32">
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
