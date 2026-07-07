@@ -54,20 +54,20 @@ export const APLICACIONES_ESPECIALES = {
     "Atención a empresas y flotas de vehículos",
   ],
 
-  imagenes: [
-    {
-      src: "/assets/pesado1.png",
-      alt: "Conjunto de embrague pesado BARPRAN",
-    },
-    {
-      src: "/assets/pesado2.png",
-      alt: "Aplicación especial para vehículos pesados",
-    },
-    {
-      src: "/assets/pesado3.png",
-      alt: "Servicio de embragues para camiones y maquinaria",
-    },
-  ],
+imagenes: [
+  {
+    src: "/pesado1.png",
+    alt: "Conjunto de embrague pesado BARPRAN",
+  },
+  {
+    src: "/pesado2.png",
+    alt: "Aplicación especial para vehículos pesados",
+  },
+  {
+    src: "/pesado3.png",
+    alt: "Servicio de embragues para camiones y maquinaria",
+  },
+],
 } as const;
 export const HERO = {
   eyebrow: "Desde 1971 · Argentina",
