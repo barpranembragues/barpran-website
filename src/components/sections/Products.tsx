@@ -1,7 +1,7 @@
 "use client";
 
 import { AnimatePresence, motion } from "framer-motion";
-import { useState } from "react";
+import { useEffect, useState } from "react";
 import { PRODUCTOS } from "@/lib/content";
 import { EASE_RACE } from "@/lib/motion";
 import SectionLabel from "@/components/ui/SectionLabel";
@@ -11,6 +11,31 @@ import ClutchDisc from "@/components/ui/ClutchDisc";
 export default function Products() {
   const [active, setActive] = useState(0);
   const item = PRODUCTOS.items[active];
+  const [indiceImagen, setIndiceImagen] = useState(0);
+
+const imagenesDelItem =
+  "imagenes" in item
+    ? item.imagenes
+    : "imagen" in item
+      ? [item.imagen]
+      : [];;
+
+useEffect(() => {
+  setIndiceImagen(0);
+}, [item.codigo]);
+
+useEffect(() => {
+  if (imagenesDelItem.length <= 1) return;
+
+  const intervalo = window.setInterval(() => {
+    setIndiceImagen(
+      (indiceAnterior) =>
+        (indiceAnterior + 1) % imagenesDelItem.length
+    );
+  }, 3500);
+
+  return () => window.clearInterval(intervalo);
+}, [item.codigo, imagenesDelItem.length]);
 
   return (
     <section
@@ -74,13 +99,13 @@ export default function Products() {
 
             <AnimatePresence mode="wait">
               <motion.div
-                key={item.codigo}
+                key={`${item.codigo}-${indiceImagen}`}
                 initial={{ opacity: 0, y: 24 }}
                 animate={{ opacity: 1, y: 0 }}
                 exit={{ opacity: 0, y: -24 }}
                 transition={{ duration: 0.5, ease: EASE_RACE }}
                 style={{
-  backgroundImage: `linear-gradient(90deg, rgba(10,10,10,0.96) 0%, rgba(10,10,10,0.85) 45%, rgba(10,10,10,0.35) 100%), url(${item.imagen})`,
+  backgroundImage: `linear-gradient(90deg, rgba(10,10,10,0.96) 0%, rgba(10,10,10,0.85) 45%, rgba(10,10,10,0.35) 100%), url("${imagenesDelItem[indiceImagen]}")`,
   backgroundSize: "cover",
   backgroundPosition: "center center",
   backgroundRepeat: "no-repeat",

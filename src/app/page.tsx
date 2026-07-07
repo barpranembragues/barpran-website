@@ -8,6 +8,7 @@ import History from "@/components/sections/History";
 import Shop from "@/components/sections/Shop";
 import Contact from "@/components/sections/Contact";
 import ScrollProgress from "@/components/ui/ScrollProgress";
+import AplicacionesEspeciales from "@/components/sections/AplicacionesEspeciales";
 
 export default function Home() {
   return (
@@ -21,7 +22,9 @@ export default function Home() {
       <Manufacturing />
       <History />
       <Shop />
+      <AplicacionesEspeciales />
       <Contact />
+      
     </>
   );
 }

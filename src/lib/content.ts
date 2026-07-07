@@ -24,9 +24,51 @@ export const NAV = [
   { label: "Productos", href: "#productos" },
   { label: "Fabricación", href: "#fabricacion" },
   { label: "Historia", href: "#historia" },
-  { label: "Contacto", href: "#contacto" },
+  { label: "APLICACIONES ESPECIALES", href: "#aplicaciones-especiales" },
 ] as const;
 
+export const APLICACIONES_ESPECIALES = {
+  id: "aplicaciones-especiales",
+
+  eyebrow: "SOLUCIONES PARA TRABAJO PESADO",
+
+  titulo: "APLICACIONES ESPECIALES",
+
+  introduccion:
+    "Ingeniería, reparación y mantenimiento para vehículos, equipos y maquinarias sometidos a condiciones de trabajo exigentes.",
+
+  descripcion:
+    "En BARPRAN brindamos soluciones especializadas en conjuntos de embrague pesados y sistemas de frenos para camiones, colectivos, buses, grúas, tractores y maquinaria vinculada con la industria agropecuaria.",
+
+  empresas:
+    "Trabajamos con pequeñas empresas, grandes compañías, talleres especializados y flotas de vehículos que necesitan confiabilidad, respuesta técnica y continuidad operativa.",
+
+  servicios: [
+    "Conjuntos de embrague para servicio pesado",
+    "Reparación y mantenimiento de embragues",
+    "Mantenimiento integral de sistemas de frenos",
+    "Soluciones para camiones y vehículos comerciales",
+    "Servicio para colectivos y buses",
+    "Aplicaciones para grúas y maquinaria industrial",
+    "Embragues para tractores y maquinaria agrícola",
+    "Atención a empresas y flotas de vehículos",
+  ],
+
+  imagenes: [
+    {
+      src: "/assets/pesado1.png",
+      alt: "Conjunto de embrague pesado BARPRAN",
+    },
+    {
+      src: "/assets/pesado2.png",
+      alt: "Aplicación especial para vehículos pesados",
+    },
+    {
+      src: "/assets/pesado3.png",
+      alt: "Servicio de embragues para camiones y maquinaria",
+    },
+  ],
+} as const;
 export const HERO = {
   eyebrow: "Desde 1971 · Argentina",
   titulo: ["BARPRAN", "EL EMBRAGUE DEL AUTOMOVILISMO"],
@@ -134,17 +176,24 @@ export const PRODUCTOS = {
 },
     {
       codigo: "EC-04",
-      nombre: "Embragues de competición",
+      nombre: "Reacondicionado Estandar",
       resumen: "Conjuntos racing desarrollados para las disciplinas más demandantes.",
-      imagen: "/multidisco.png",
-      specs: ["Materiales cerámicos / metálicos", "Modulación de pedal", "Setup por disciplina"],
+      imagenes: [
+  "/Placa Vieja.png",
+  "/Placa Nueva.png",
+  "/Disco Viejo.png",
+  "/Disco Nuevo.png",
+  "/Volante Viejo.png",
+  "/Volante Nuevo.png",
+],
+      specs: ["Reparación de placas", "Reparación de discos", "Rectificado de Volantes"],
     },
     {
       codigo: "AP-05",
       nombre: "Aplicaciones especiales",
       resumen: "Desarrollo a medida para proyectos únicos, clásicos y maquinaria especial.",
-      imagen: "/multidisco.png",
-      specs: ["Ingeniería inversa", "Fabricación a pedido", "AGRO"],
+      imagen: "/pesado1.png",
+      specs: ["Camiones", "Tractores", "AGRO"],
     },
   ],
 } as const;
