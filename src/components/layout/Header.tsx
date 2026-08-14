@@ -10,6 +10,8 @@ export default function Header() {
   const [scrolled, setScrolled] = useState(false);
   const [open, setOpen] = useState(false);
 
+  const resolveHref = (href: string) => (href.startsWith("#") ? `/${href}` : href);
+
   useEffect(() => {
     const onScroll = () => setScrolled(window.scrollY > 24);
     onScroll();
@@ -37,7 +39,7 @@ export default function Header() {
         }`}
       >
         <div className="frame flex h-16 items-center justify-between md:h-20">
-          <Link href="#hero" className="relative z-10 flex items-center" aria-label="BARPRAN — inicio">
+          <Link href="/#hero" className="relative z-10 flex items-center" aria-label="BARPRAN — inicio">
             <Image
               src="/logo-barpran-light.png"
               alt="BARPRAN"
@@ -48,26 +50,31 @@ export default function Header() {
             />
           </Link>
 
-          <nav className="hidden items-center gap-8 lg:flex">
+          <nav className="hidden items-center gap-7 lg:flex">
             {NAV.map((item) => (
               <a
                 key={item.href}
-                href={item.href}
-                className="group relative font-mono text-[0.72rem] uppercase tracking-mega text-ash transition-colors hover:text-bone"
+                href={resolveHref(item.href)}
+                className="group relative font-mono text-[0.68rem] uppercase tracking-mega text-ash transition-colors hover:text-bone"
               >
                 {item.label}
                 <span className="absolute -bottom-1.5 left-0 h-px w-0 bg-barpran transition-all duration-500 ease-race group-hover:w-full" />
               </a>
             ))}
-            <a
-  href="https://wa.me/5491170586143?text=Hola%20BARPRAN%2C%20quiero%20hacer%20una%20consulta"
-  target="_blank"
-  rel="noopener noreferrer"
-  className="skewed border border-barpran/60 bg-barpran/10 px-5 py-2 text-bone transition-colors hover:bg-barpran"
+            <Link
+              href="/tienda"
+              className="group relative font-mono text-[0.68rem] font-bold uppercase tracking-mega text-bone transition-colors hover:text-barpran"
             >
-              <span className="block font-mono text-[0.72rem] uppercase tracking-mega">
-                Contacto
-              </span>
+              Tienda
+              <span className="absolute -bottom-1.5 left-0 h-px w-full bg-barpran" />
+            </Link>
+            <a
+              href="https://wa.me/5491170586143?text=Hola%20BARPRAN%2C%20quiero%20hacer%20una%20consulta"
+              target="_blank"
+              rel="noopener noreferrer"
+              className="skewed border border-barpran/60 bg-barpran/10 px-5 py-2 text-bone transition-colors hover:bg-barpran"
+            >
+              <span className="block font-mono text-[0.72rem] uppercase tracking-mega">Contacto</span>
             </a>
           </nav>
 
@@ -77,21 +84,9 @@ export default function Header() {
             aria-label={open ? "Cerrar menú" : "Abrir menú"}
             aria-expanded={open}
           >
-            <span
-              className={`h-[2px] w-6 bg-bone transition-all duration-300 ${
-                open ? "translate-y-[7px] rotate-45" : ""
-              }`}
-            />
-            <span
-              className={`h-[2px] w-6 bg-bone transition-all duration-300 ${
-                open ? "opacity-0" : ""
-              }`}
-            />
-            <span
-              className={`h-[2px] w-6 bg-bone transition-all duration-300 ${
-                open ? "-translate-y-[7px] -rotate-45" : ""
-              }`}
-            />
+            <span className={`h-[2px] w-6 bg-bone transition-all duration-300 ${open ? "translate-y-[7px] rotate-45" : ""}`} />
+            <span className={`h-[2px] w-6 bg-bone transition-all duration-300 ${open ? "opacity-0" : ""}`} />
+            <span className={`h-[2px] w-6 bg-bone transition-all duration-300 ${open ? "-translate-y-[7px] -rotate-45" : ""}`} />
           </button>
         </div>
       </motion.header>
@@ -110,22 +105,32 @@ export default function Header() {
               {NAV.map((item, i) => (
                 <motion.a
                   key={item.href}
-                  href={item.href}
+                  href={resolveHref(item.href)}
                   onClick={() => setOpen(false)}
                   initial={{ opacity: 0, x: -30 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 + i * 0.06, ease: [0.16, 1, 0.3, 1] }}
                   className="display border-b border-white/5 py-4 text-4xl text-bone"
                 >
-                  <span className="mr-3 font-mono text-sm not-italic text-barpran">
-                    0{i + 1}
-                  </span>
+                  <span className="mr-3 font-mono text-sm not-italic text-barpran">0{i + 1}</span>
                   {item.label}
                 </motion.a>
               ))}
-              <p className="mt-8 font-mono text-xs uppercase tracking-mega text-ash">
-                {SITE.email}
-              </p>
+              <motion.div
+                initial={{ opacity: 0, x: -30 }}
+                animate={{ opacity: 1, x: 0 }}
+                transition={{ delay: 0.5, ease: [0.16, 1, 0.3, 1] }}
+              >
+                <Link
+                  href="/tienda"
+                  onClick={() => setOpen(false)}
+                  className="display block border-b border-white/5 py-4 text-4xl text-bone"
+                >
+                  <span className="mr-3 font-mono text-sm not-italic text-barpran">07</span>
+                  Tienda
+                </Link>
+              </motion.div>
+              <p className="mt-8 font-mono text-xs uppercase tracking-mega text-ash">{SITE.email}</p>
             </nav>
           </motion.div>
         )}
