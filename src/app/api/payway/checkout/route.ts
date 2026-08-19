@@ -64,7 +64,7 @@ export async function POST(request: NextRequest) {
 
   const baseUrl = getBaseUrl(request);
   const successUrl = `${baseUrl}/tienda/compra-exitosa?producto=${encodeURIComponent(product.id)}`;
-  const cancelUrl = `${baseUrl}/tienda/checkout?producto=${encodeURIComponent(product.id)}&cancelado=1`;
+  const cancelUrl = `${baseUrl}/tienda/cancelada`;
   const notificationsUrl = `${baseUrl}/api/payway/notificaciones`;
 
   const payload = {
@@ -127,7 +127,7 @@ export async function POST(request: NextRequest) {
 
     const result = data as Record<string, unknown>;
     const paymentId = result.payment_id ?? result.id ?? result.paymentId;
-    const directUrl = result.url ?? result.checkout_url ?? result.redirect_url;
+    const directUrl = result.url ?? result.checkout_url ?? result.redirect_url ?? result.payment_link;
 
     if (typeof directUrl === "string" && directUrl.startsWith("http")) {
       return NextResponse.redirect(directUrl, 303);
