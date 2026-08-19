@@ -3,6 +3,7 @@ import { SHOP_PRODUCTS } from "@/lib/content";
 
 const PAYWAY_CHECKOUT_API = "https://developers.decidir.com/api/v1/checkout-payment-button/link";
 const PAYWAY_CHECKOUT_WEB = "https://developers.decidir.com/web/checkout";
+const PAYWAY_SANDBOX_TEMPLATE_ID = 1;
 
 function priceToNumber(price: string) {
   const normalized = price.replace(/[^0-9,.-]/g, "").replace(/\./g, "").replace(",", ".");
@@ -51,33 +52,35 @@ export async function POST(request: NextRequest) {
   const publicKey = process.env.NEXT_PUBLIC_PAYWAY_PUBLIC_KEY_TEST;
   const privateKey = process.env.PAYWAY_PRIVATE_KEY_TEST;
   const siteId = process.env.PAYWAY_SITE_ID_TEST;
-  const templateId = process.env.PAYWAY_TEMPLATE_ID_TEST;
 
-  if (!publicKey || !privateKey || !siteId || !templateId) {
+  if (!publicKey || !privateKey || !siteId) {
     console.error("Payway config missing", {
       publicKey: Boolean(publicKey),
       privateKey: Boolean(privateKey),
       siteId: Boolean(siteId),
-      templateId: Boolean(templateId),
     });
     return checkoutError(request, product.id, "config");
   }
 
   const baseUrl = getBaseUrl(request);
+  const successUrl = `${baseUrl}/tienda/compra-exitosa?producto=${encodeURIComponent(product.id)}`;
+  const cancelUrl = `${baseUrl}/tienda/checkout?producto=${encodeURIComponent(product.id)}&cancelado=1`;
+  const notificationsUrl = `${baseUrl}/api/payway/notificaciones`;
+
   const payload = {
     origin_platform: "BARPRAN-NEXTJS",
     payment_description: `${product.nombre} | ${marca} ${modelo} ${anio} ${motor} ${combustible}`.slice(0, 250),
     currency: "ARS",
     total_price: priceToNumber(product.precio),
     site: siteId,
-    success_url: `${baseUrl}/tienda/compra-exitosa?producto=${encodeURIComponent(product.id)}`,
-    cancel_url: `${baseUrl}/tienda/checkout?producto=${encodeURIComponent(product.id)}&cancelado=1`,
-    notifications_url: `${baseUrl}/api/payway/notificaciones`,
-    template_id: Number(templateId),
+    success_url: successUrl,
+    cancel_url: cancelUrl,
+    notifications_url: notificationsUrl,
+    template_id: PAYWAY_SANDBOX_TEMPLATE_ID,
     installments: [1],
     plan_gobierno: false,
     public_apikey: publicKey,
-    auth_3ds: true,
+    auth_3ds: false,
   };
 
   try {
@@ -112,6 +115,8 @@ export async function POST(request: NextRequest) {
             status: response.status,
             response: data,
             product: product.id,
+            template_id: PAYWAY_SANDBOX_TEMPLATE_ID,
+            cancel_url: cancelUrl,
           },
           null,
           2
