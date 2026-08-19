@@ -1,17 +1,32 @@
 import { NextRequest, NextResponse } from "next/server";
-import { SHOP_PRODUCTS } from "@/lib/content";
 
 const PAYWAY_CHECKOUT_API = "https://developers.decidir.com/api/v1/checkout-payment-button/link";
 const PAYWAY_CHECKOUT_WEB = "https://developers.decidir.com/web/checkout";
 const PAYWAY_SANDBOX_TEMPLATE_ID = 1;
-
-function priceToNumber(price: string) {
-  const normalized = price.replace(/[^0-9,.-]/g, "").replace(/\./g, "").replace(",", ".");
-  return Number(normalized);
-}
+const MAX_AMOUNT = 100_000_000;
 
 function clean(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
+}
+
+function parseArgentineAmount(value: string) {
+  const compact = value.replace(/\s/g, "").replace(/\$/g, "").replace(/[^0-9.,]/g, "");
+  if (!compact) return Number.NaN;
+
+  if (compact.includes(",")) {
+    const parts = compact.split(",");
+    if (parts.length !== 2 || parts[1].length > 2) return Number.NaN;
+    const whole = parts[0].replace(/\./g, "");
+    const decimals = parts[1] || "0";
+    return Number(`${whole}.${decimals}`);
+  }
+
+  const dotParts = compact.split(".");
+  if (dotParts.length === 2 && dotParts[1].length > 0 && dotParts[1].length <= 2) {
+    return Number(`${dotParts[0]}.${dotParts[1]}`);
+  }
+
+  return Number(compact.replace(/\./g, ""));
 }
 
 function getBaseUrl(request: NextRequest) {
@@ -24,9 +39,8 @@ function getBaseUrl(request: NextRequest) {
   return request.nextUrl.origin;
 }
 
-function checkoutError(request: NextRequest, producto: string, code: string) {
-  const url = new URL("/tienda/checkout", getBaseUrl(request));
-  url.searchParams.set("producto", producto);
+function checkoutError(request: NextRequest, code: string) {
+  const url = new URL("/tienda", getBaseUrl(request));
   url.searchParams.set("error", code);
   return NextResponse.redirect(url, 303);
 }
@@ -34,19 +48,30 @@ function checkoutError(request: NextRequest, producto: string, code: string) {
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
 
-  const producto = clean(formData.get("producto"));
-  const marca = clean(formData.get("marca"));
-  const modelo = clean(formData.get("modelo"));
-  const anio = clean(formData.get("anio"));
-  const motor = clean(formData.get("motor"));
-  const combustible = clean(formData.get("combustible"));
+  const montoRaw = clean(formData.get("monto"));
+  const concepto = clean(formData.get("concepto"));
+  const nombre = clean(formData.get("nombre"));
   const whatsapp = clean(formData.get("whatsapp"));
+  const vehiculo = clean(formData.get("vehiculo"));
+  const referencia = clean(formData.get("referencia"));
+  const confirmado = clean(formData.get("confirmado"));
 
-  const product = SHOP_PRODUCTS.find((item) => item.id === producto);
-  if (!product) return checkoutError(request, producto || SHOP_PRODUCTS[0].id, "datos");
+  if (!concepto || !nombre || !whatsapp) {
+    return checkoutError(request, "datos");
+  }
 
-  if (!marca || !modelo || !anio || !motor || !combustible || !whatsapp) {
-    return checkoutError(request, product.id, "datos");
+  if (confirmado !== "si") {
+    return checkoutError(request, "confirmar");
+  }
+
+  const totalPrice = parseArgentineAmount(montoRaw);
+  if (!Number.isFinite(totalPrice) || totalPrice <= 0 || totalPrice > MAX_AMOUNT) {
+    return checkoutError(request, "monto");
+  }
+
+  const whatsappDigits = whatsapp.replace(/\D/g, "");
+  if (whatsappDigits.length < 8 || concepto.length > 120 || nombre.length > 100) {
+    return checkoutError(request, "datos");
   }
 
   const publicKey = process.env.NEXT_PUBLIC_PAYWAY_PUBLIC_KEY_TEST;
@@ -59,21 +84,29 @@ export async function POST(request: NextRequest) {
       privateKey: Boolean(privateKey),
       siteId: Boolean(siteId),
     });
-    return checkoutError(request, product.id, "config");
+    return checkoutError(request, "config");
   }
 
   const baseUrl = getBaseUrl(request);
-  const successUrl = `${baseUrl}/tienda/compra-exitosa?producto=${encodeURIComponent(product.id)}`;
+  const successUrl = new URL("/tienda/compra-exitosa", baseUrl);
+  successUrl.searchParams.set("monto", totalPrice.toFixed(2));
+  successUrl.searchParams.set("concepto", concepto.slice(0, 120));
+  if (referencia) successUrl.searchParams.set("referencia", referencia.slice(0, 60));
+
   const cancelUrl = `${baseUrl}/tienda/cancelada`;
   const notificationsUrl = `${baseUrl}/api/payway/notificaciones`;
 
+  const descriptionParts = [concepto];
+  if (vehiculo) descriptionParts.push(vehiculo);
+  if (referencia) descriptionParts.push(`Ref ${referencia}`);
+
   const payload = {
     origin_platform: "BARPRAN-NEXTJS",
-    payment_description: `${product.nombre} | ${marca} ${modelo} ${anio} ${motor} ${combustible}`.slice(0, 250),
+    payment_description: descriptionParts.join(" | ").slice(0, 250),
     currency: "ARS",
-    total_price: priceToNumber(product.precio),
+    total_price: Number(totalPrice.toFixed(2)),
     site: siteId,
-    success_url: successUrl,
+    success_url: successUrl.toString(),
     cancel_url: cancelUrl,
     notifications_url: notificationsUrl,
     template_id: PAYWAY_SANDBOX_TEMPLATE_ID,
@@ -114,7 +147,7 @@ export async function POST(request: NextRequest) {
           {
             status: response.status,
             response: data,
-            product: product.id,
+            amount: totalPrice,
             template_id: PAYWAY_SANDBOX_TEMPLATE_ID,
             cancel_url: cancelUrl,
           },
@@ -122,7 +155,7 @@ export async function POST(request: NextRequest) {
           2
         )
       );
-      return checkoutError(request, product.id, "payway");
+      return checkoutError(request, "payway");
     }
 
     const result = data as Record<string, unknown>;
@@ -138,9 +171,9 @@ export async function POST(request: NextRequest) {
     }
 
     console.error("Payway checkout response without payment id", JSON.stringify(data, null, 2));
-    return checkoutError(request, product.id, "payway");
+    return checkoutError(request, "payway");
   } catch (error) {
     console.error("Payway checkout request failed", error);
-    return checkoutError(request, product.id, "payway");
+    return checkoutError(request, "payway");
   }
 }
