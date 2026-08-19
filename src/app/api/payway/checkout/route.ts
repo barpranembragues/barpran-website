@@ -1,8 +1,10 @@
 import { NextRequest, NextResponse } from "next/server";
 
-const PAYWAY_CHECKOUT_API = "https://developers.decidir.com/api/v1/checkout-payment-button/link";
-const PAYWAY_CHECKOUT_WEB = "https://developers.decidir.com/web/checkout";
-const PAYWAY_SANDBOX_TEMPLATE_ID = 1;
+const PAYWAY_SANDBOX_API = "https://developers.decidir.com/api/v1/checkout-payment-button/link";
+const PAYWAY_SANDBOX_WEB = "https://developers.decidir.com/web/checkout";
+const PAYWAY_PRODUCTION_API = "https://ventasonline.payway.com.ar/api/v1/checkout-payment-button/link";
+const PAYWAY_PRODUCTION_WEB = "https://live.decidir.com/web/checkout";
+const PAYWAY_TEMPLATE_ID = 1;
 const MAX_AMOUNT = 100_000_000;
 
 function clean(value: FormDataEntryValue | null) {
@@ -27,6 +29,17 @@ function parseArgentineAmount(value: string) {
   }
 
   return Number(compact.replace(/\./g, ""));
+}
+
+function getRequestHost(request: NextRequest) {
+  const forwardedHost = request.headers.get("x-forwarded-host");
+  const host = forwardedHost ?? request.headers.get("host") ?? request.nextUrl.host;
+  return host.split(":")[0].toLowerCase();
+}
+
+function isProductionHost(request: NextRequest) {
+  const host = getRequestHost(request);
+  return host === "barpran.com.ar" || host === "www.barpran.com.ar";
 }
 
 function getBaseUrl(request: NextRequest) {
@@ -74,12 +87,24 @@ export async function POST(request: NextRequest) {
     return checkoutError(request, "datos");
   }
 
-  const publicKey = process.env.NEXT_PUBLIC_PAYWAY_PUBLIC_KEY_TEST;
-  const privateKey = process.env.PAYWAY_PRIVATE_KEY_TEST;
-  const siteId = process.env.PAYWAY_SITE_ID_TEST;
+  // Protección deliberada: solo el dominio oficial de BARPRAN usa credenciales reales.
+  // Deploy Previews y cualquier otro hostname continúan siempre en Sandbox.
+  const production = isProductionHost(request);
+  const publicKey = production
+    ? process.env.NEXT_PUBLIC_PAYWAY_PUBLIC_KEY_PROD
+    : process.env.NEXT_PUBLIC_PAYWAY_PUBLIC_KEY_TEST;
+  const privateKey = production
+    ? process.env.PAYWAY_PRIVATE_KEY_PROD
+    : process.env.PAYWAY_PRIVATE_KEY_TEST;
+  const siteId = production
+    ? process.env.PAYWAY_SITE_ID_PROD
+    : process.env.PAYWAY_SITE_ID_TEST;
+  const checkoutApi = production ? PAYWAY_PRODUCTION_API : PAYWAY_SANDBOX_API;
+  const checkoutWeb = production ? PAYWAY_PRODUCTION_WEB : PAYWAY_SANDBOX_WEB;
 
   if (!publicKey || !privateKey || !siteId) {
     console.error("Payway config missing", {
+      environment: production ? "production" : "sandbox",
       publicKey: Boolean(publicKey),
       privateKey: Boolean(privateKey),
       siteId: Boolean(siteId),
@@ -109,7 +134,7 @@ export async function POST(request: NextRequest) {
     success_url: successUrl.toString(),
     cancel_url: cancelUrl,
     notifications_url: notificationsUrl,
-    template_id: PAYWAY_SANDBOX_TEMPLATE_ID,
+    template_id: PAYWAY_TEMPLATE_ID,
     installments: [1],
     plan_gobierno: false,
     public_apikey: publicKey,
@@ -121,7 +146,7 @@ export async function POST(request: NextRequest) {
       JSON.stringify({ service: "SDK-NODE", grouper: "BARPRAN", developer: "BARPRAN" })
     ).toString("base64");
 
-    const response = await fetch(PAYWAY_CHECKOUT_API, {
+    const response = await fetch(checkoutApi, {
       method: "POST",
       headers: {
         apikey: privateKey,
@@ -145,10 +170,11 @@ export async function POST(request: NextRequest) {
         "Payway checkout error FULL",
         JSON.stringify(
           {
+            environment: production ? "production" : "sandbox",
             status: response.status,
             response: data,
             amount: totalPrice,
-            template_id: PAYWAY_SANDBOX_TEMPLATE_ID,
+            template_id: PAYWAY_TEMPLATE_ID,
             cancel_url: cancelUrl,
           },
           null,
@@ -167,7 +193,7 @@ export async function POST(request: NextRequest) {
     }
 
     if (paymentId !== undefined && paymentId !== null) {
-      return NextResponse.redirect(`${PAYWAY_CHECKOUT_WEB}/${encodeURIComponent(String(paymentId))}`, 303);
+      return NextResponse.redirect(`${checkoutWeb}/${encodeURIComponent(String(paymentId))}`, 303);
     }
 
     console.error("Payway checkout response without payment id", JSON.stringify(data, null, 2));
