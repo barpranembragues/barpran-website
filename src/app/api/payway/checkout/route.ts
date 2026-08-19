@@ -105,13 +105,18 @@ export async function POST(request: NextRequest) {
     }
 
     if (!response.ok || !data) {
-      console.error("Payway checkout error", {
-        status: response.status,
-        response: data,
-        product: product.id,
-        siteId,
-        templateId,
-      });
+      console.error(
+        "Payway checkout error FULL",
+        JSON.stringify(
+          {
+            status: response.status,
+            response: data,
+            product: product.id,
+          },
+          null,
+          2
+        )
+      );
       return checkoutError(request, product.id, "payway");
     }
 
@@ -127,7 +132,7 @@ export async function POST(request: NextRequest) {
       return NextResponse.redirect(`${PAYWAY_CHECKOUT_WEB}/${encodeURIComponent(String(paymentId))}`, 303);
     }
 
-    console.error("Payway checkout response without payment id", data);
+    console.error("Payway checkout response without payment id", JSON.stringify(data, null, 2));
     return checkoutError(request, product.id, "payway");
   } catch (error) {
     console.error("Payway checkout request failed", error);
