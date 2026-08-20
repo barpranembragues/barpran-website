@@ -5,7 +5,9 @@ import { useMemo, useState } from "react";
 type Plan = {
   installments: 1 | 3 | 6;
   coefficient: number;
-  cft?: string;
+  label: string;
+  detail: string;
+  financing?: string;
 };
 
 type PaymentFormProps = {
@@ -68,7 +70,7 @@ export default function PaymentForm({ plans }: PaymentFormProps) {
             className="h-full min-w-0 flex-1 bg-transparent px-3 text-2xl font-bold text-bone outline-none"
           />
         </div>
-        <span className="text-xs leading-5 text-ash">Ingresá el precio de contado que te informó BARPRAN. Si elegís cuotas, calcularemos el total financiado antes de ir a Payway.</span>
+        <span className="text-xs leading-5 text-ash">Ingresá el precio de contado que te informó BARPRAN. Si elegís cuotas, el total financiado se calcula automáticamente.</span>
       </label>
 
       <fieldset className="sm:col-span-2">
@@ -96,12 +98,11 @@ export default function PaymentForm({ plans }: PaymentFormProps) {
                 />
                 <div className="flex items-start justify-between gap-3">
                   <div>
-                    <p className="font-bold text-bone">
-                      {plan.installments === 1 ? "1 pago" : `${plan.installments} cuotas`}
-                    </p>
+                    <p className="font-bold text-bone">{plan.label}</p>
+                    <p className="mt-1 text-xs leading-5 text-ash">{plan.detail}</p>
                     {validAmount ? (
                       <>
-                        <p className="mt-2 text-xl font-bold text-bone">
+                        <p className="mt-3 text-xl font-bold text-bone">
                           {plan.installments === 1 ? money(total) : `${plan.installments} × ${money(perInstallment)}`}
                         </p>
                         {plan.installments > 1 && (
@@ -109,14 +110,14 @@ export default function PaymentForm({ plans }: PaymentFormProps) {
                         )}
                       </>
                     ) : (
-                      <p className="mt-2 text-sm text-ash">Ingresá el monto para calcular.</p>
+                      <p className="mt-3 text-sm text-ash">Ingresá el monto para calcular.</p>
                     )}
                   </div>
                   <span className={`mt-1 h-3 w-3 rounded-full border ${active ? "border-barpran bg-barpran" : "border-white/30"}`} />
                 </div>
-                {plan.installments > 1 && plan.cft && (
-                  <p className="mt-3 border-t border-white/10 pt-3 font-mono text-[0.65rem] uppercase tracking-wider text-ash">
-                    Costo financiero: {plan.cft}
+                {plan.installments > 1 && plan.financing && (
+                  <p className="mt-3 border-t border-white/10 pt-3 font-mono text-[0.62rem] uppercase leading-5 tracking-wider text-ash">
+                    {plan.financing}
                   </p>
                 )}
               </label>
@@ -126,7 +127,7 @@ export default function PaymentForm({ plans }: PaymentFormProps) {
 
         {selectedPlan.installments > 1 && validAmount && (
           <div className="mt-4 border border-barpran/30 bg-barpran/5 p-4 text-sm leading-6 text-ash">
-            <strong className="text-bone">Financiación seleccionada:</strong> precio de contado {money(cashAmount)} → total a pagar {money(financedTotal)} en {selectedPlan.installments} cuotas de {money(installmentValue)}. El costo financiero está incluido en el total mostrado.
+            <strong className="text-bone">Financiación seleccionada:</strong> precio de contado {money(cashAmount)} → total financiado {money(financedTotal)} → {selectedPlan.installments} cuotas de {money(installmentValue)}. El costo financiero está incluido en el total y es abonado por el comprador.
           </div>
         )}
       </fieldset>
@@ -167,7 +168,7 @@ export default function PaymentForm({ plans }: PaymentFormProps) {
       <label className="sm:col-span-2 flex cursor-pointer gap-3 border border-white/10 bg-white/[0.025] p-4 text-sm leading-6 text-ash">
         <input required type="checkbox" name="confirmado" value="si" className="mt-1 h-4 w-4 accent-red-600" />
         <span>
-          Confirmo que el <strong className="text-bone">precio de contado</strong> ingresado coincide con el importe informado previamente por <strong className="text-bone">BARPRAN</strong> y que, si elijo cuotas, acepto el total financiado mostrado arriba.
+          Confirmo que el <strong className="text-bone">precio de contado</strong> ingresado coincide con el importe informado por <strong className="text-bone">BARPRAN</strong> y que, si elijo cuotas, acepto el total financiado y el costo financiero informados arriba.
         </span>
       </label>
 
