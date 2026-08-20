@@ -3,6 +3,8 @@ import Link from "next/link";
 type SuccessPageProps = {
   searchParams: Promise<{
     monto?: string;
+    montoContado?: string;
+    cuotas?: string;
     concepto?: string;
     referencia?: string;
   }>;
@@ -21,8 +23,15 @@ function formatAmount(value?: string) {
 }
 
 export default async function CompraExitosaPage({ searchParams }: SuccessPageProps) {
-  const { monto, concepto, referencia } = await searchParams;
-  const formattedAmount = formatAmount(monto);
+  const { monto, montoContado, cuotas, concepto, referencia } = await searchParams;
+  const formattedTotal = formatAmount(monto);
+  const formattedCash = formatAmount(montoContado);
+  const installmentCount = Number(cuotas || "1");
+  const totalNumber = Number(monto);
+  const installmentValue =
+    Number.isFinite(totalNumber) && totalNumber > 0 && Number.isFinite(installmentCount) && installmentCount > 0
+      ? formatAmount(String(totalNumber / installmentCount))
+      : null;
 
   return (
     <div className="min-h-screen bg-carbon pt-24 text-bone md:pt-28">
@@ -34,7 +43,7 @@ export default async function CompraExitosaPage({ searchParams }: SuccessPagePro
             Payway finalizó el flujo de pago. BARPRAN verificará el estado definitivo de la operación antes de entregar, preparar o despachar el pedido.
           </p>
 
-          {(concepto || formattedAmount || referencia) && (
+          {(concepto || formattedTotal || referencia) && (
             <div className="mt-8 space-y-5 border-y border-white/10 py-6">
               {concepto && (
                 <div>
@@ -42,12 +51,28 @@ export default async function CompraExitosaPage({ searchParams }: SuccessPagePro
                   <p className="mt-2 text-xl font-bold">{concepto}</p>
                 </div>
               )}
-              {formattedAmount && (
+
+              {formattedCash && (
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-mega text-ash">Importe informado</p>
-                  <p className="mt-2 text-2xl font-bold">{formattedAmount}</p>
+                  <p className="font-mono text-xs uppercase tracking-mega text-ash">Precio de contado informado</p>
+                  <p className="mt-2 text-xl font-bold">{formattedCash}</p>
                 </div>
               )}
+
+              {formattedTotal && (
+                <div>
+                  <p className="font-mono text-xs uppercase tracking-mega text-ash">
+                    {installmentCount > 1 ? "Total financiado" : "Importe abonado"}
+                  </p>
+                  <p className="mt-2 text-2xl font-bold">{formattedTotal}</p>
+                  {installmentCount > 1 && installmentValue && (
+                    <p className="mt-2 text-sm text-ash">
+                      {installmentCount} cuotas de {installmentValue} · Cuotas MiPyME
+                    </p>
+                  )}
+                </div>
+              )}
+
               {referencia && (
                 <div>
                   <p className="font-mono text-xs uppercase tracking-mega text-ash">Referencia</p>
