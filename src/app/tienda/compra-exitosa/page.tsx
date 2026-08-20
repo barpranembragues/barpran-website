@@ -3,6 +3,8 @@ import Link from "next/link";
 type SuccessPageProps = {
   searchParams: Promise<{
     monto?: string;
+    montoContado?: string;
+    cuotas?: string;
     concepto?: string;
     referencia?: string;
   }>;
@@ -21,8 +23,13 @@ function formatAmount(value?: string) {
 }
 
 export default async function CompraExitosaPage({ searchParams }: SuccessPageProps) {
-  const { monto, concepto, referencia } = await searchParams;
+  const { monto, montoContado, cuotas, concepto, referencia } = await searchParams;
   const formattedAmount = formatAmount(monto);
+  const formattedCashAmount = formatAmount(montoContado);
+  const installments = Number(cuotas || "1");
+  const installmentAmount = formattedAmount && Number.isFinite(installments) && installments > 1
+    ? formatAmount(String(Number(monto) / installments))
+    : null;
 
   return (
     <div className="min-h-screen bg-carbon pt-24 text-bone md:pt-28">
@@ -42,12 +49,26 @@ export default async function CompraExitosaPage({ searchParams }: SuccessPagePro
                   <p className="mt-2 text-xl font-bold">{concepto}</p>
                 </div>
               )}
-              {formattedAmount && (
+
+              {formattedCashAmount && installments > 1 && (
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-mega text-ash">Importe informado</p>
-                  <p className="mt-2 text-2xl font-bold">{formattedAmount}</p>
+                  <p className="font-mono text-xs uppercase tracking-mega text-ash">Precio de contado</p>
+                  <p className="mt-2 text-lg font-bold">{formattedCashAmount}</p>
                 </div>
               )}
+
+              {formattedAmount && (
+                <div>
+                  <p className="font-mono text-xs uppercase tracking-mega text-ash">
+                    {installments > 1 ? "Total financiado" : "Importe abonado"}
+                  </p>
+                  <p className="mt-2 text-2xl font-bold">{formattedAmount}</p>
+                  {installments > 1 && installmentAmount && (
+                    <p className="mt-2 text-sm text-ash">{installments} cuotas de {installmentAmount}</p>
+                  )}
+                </div>
+              )}
+
               {referencia && (
                 <div>
                   <p className="font-mono text-xs uppercase tracking-mega text-ash">Referencia</p>
