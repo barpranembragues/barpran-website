@@ -1,4 +1,5 @@
 import type { Metadata } from "next";
+import PaymentForm from "./PaymentForm";
 
 export const metadata: Metadata = {
   title: "Pagá tu compra",
@@ -13,13 +14,57 @@ type TiendaPageProps = {
 const errorMessages: Record<string, string> = {
   datos: "Completá nombre, WhatsApp y concepto para continuar.",
   monto: "Revisá el monto ingresado. Debe coincidir con el importe informado por BARPRAN.",
+  cuotas: "La opción de cuotas seleccionada no está habilitada en este momento.",
   confirmar: "Confirmá que el importe coincide con el informado por BARPRAN.",
   config: "El pago online todavía no está disponible en este entorno.",
   payway: "Payway no pudo iniciar el pago. Probá nuevamente en unos minutos.",
 };
 
+function positiveNumber(value?: string) {
+  if (!value) return null;
+  const number = Number(value.replace(",", "."));
+  return Number.isFinite(number) && number > 1 ? number : null;
+}
+
+function getPlans() {
+  const productionBuild = process.env.CONTEXT === "production";
+
+  // En Deploy Preview usamos coeficientes de prueba para validar el flujo visual y técnico.
+  // En producción, 3 y 6 cuotas sólo aparecen si BARPRAN cargó los coeficientes reales de su plan Payway.
+  const coefficient3 = productionBuild
+    ? positiveNumber(process.env.NEXT_PUBLIC_PAYWAY_COEF_3_PROD)
+    : 1.0912;
+  const coefficient6 = productionBuild
+    ? positiveNumber(process.env.NEXT_PUBLIC_PAYWAY_COEF_6_PROD)
+    : 1.1870;
+
+  const plans: Array<{ installments: 1 | 3 | 6; coefficient: number; cft?: string }> = [
+    { installments: 1, coefficient: 1 },
+  ];
+
+  if (coefficient3) {
+    plans.push({
+      installments: 3,
+      coefficient: coefficient3,
+      cft: productionBuild ? process.env.NEXT_PUBLIC_PAYWAY_CFT_3_PROD : "valor de prueba",
+    });
+  }
+
+  if (coefficient6) {
+    plans.push({
+      installments: 6,
+      coefficient: coefficient6,
+      cft: productionBuild ? process.env.NEXT_PUBLIC_PAYWAY_CFT_6_PROD : "valor de prueba",
+    });
+  }
+
+  return plans;
+}
+
 export default async function TiendaPage({ searchParams }: TiendaPageProps) {
   const { error } = await searchParams;
+  const plans = getPlans();
+  const financingAvailable = plans.length > 1;
 
   return (
     <div className="min-h-screen bg-carbon pt-24 text-bone md:pt-28">
@@ -33,7 +78,7 @@ export default async function TiendaPage({ searchParams }: TiendaPageProps) {
                 Aboná tu compra.<br />De forma segura.
               </h1>
               <p className="mt-6 max-w-2xl text-base leading-7 text-ash md:text-lg">
-                Ingresá el importe que te informó previamente BARPRAN y el concepto correspondiente. El pago se procesa en el checkout seguro de Payway.
+                Ingresá el importe de contado que te informó BARPRAN. Si elegís pagar con tarjeta de crédito en cuotas, vas a ver el total financiado antes de continuar al checkout seguro de Payway.
               </p>
             </div>
 
@@ -41,12 +86,12 @@ export default async function TiendaPage({ searchParams }: TiendaPageProps) {
               <div className="border border-white/10 bg-white/[0.025] p-4">
                 <span className="font-mono text-xs uppercase tracking-mega text-barpran">01</span>
                 <p className="mt-2 font-semibold text-bone">Ingresá el monto</p>
-                <p className="mt-1">Usá exactamente el importe que te indicó BARPRAN.</p>
+                <p className="mt-1">Usá exactamente el precio de contado indicado por BARPRAN.</p>
               </div>
               <div className="border border-white/10 bg-white/[0.025] p-4">
                 <span className="font-mono text-xs uppercase tracking-mega text-barpran">02</span>
-                <p className="mt-2 font-semibold text-bone">Indicá el concepto</p>
-                <p className="mt-1">Ejemplo: Kit de embrague Vento 1.8T o reparación de embrague.</p>
+                <p className="mt-2 font-semibold text-bone">Elegí cómo pagar</p>
+                <p className="mt-1">1 pago o, cuando estén habilitadas, opciones financiadas en cuotas.</p>
               </div>
               <div className="border border-white/10 bg-white/[0.025] p-4">
                 <span className="font-mono text-xs uppercase tracking-mega text-barpran">03</span>
@@ -64,7 +109,7 @@ export default async function TiendaPage({ searchParams }: TiendaPageProps) {
             <p className="tech-label text-barpran">Datos del pago</p>
             <h2 className="display mt-3 text-4xl md:text-5xl">Completá tu pago</h2>
             <p className="mt-4 max-w-2xl text-sm leading-6 text-ash">
-              Antes de continuar, verificá que el importe coincida exactamente con el presupuesto o monto que te informó BARPRAN.
+              Antes de continuar, verificá que el precio de contado coincida exactamente con el presupuesto o monto que te informó BARPRAN.
             </p>
 
             {error && (
@@ -73,117 +118,24 @@ export default async function TiendaPage({ searchParams }: TiendaPageProps) {
               </div>
             )}
 
-            <form action="/api/payway/checkout" method="POST" className="mt-8 grid gap-5 sm:grid-cols-2">
-              <label className="grid gap-2 sm:col-span-2">
-                <span className="font-mono text-[0.68rem] uppercase tracking-mega text-ash">Monto a abonar</span>
-                <div className="flex h-16 items-center border border-white/10 bg-white/[0.035] focus-within:border-barpran">
-                  <span className="pl-4 text-2xl font-bold text-ash">$</span>
-                  <input
-                    required
-                    type="text"
-                    inputMode="decimal"
-                    name="monto"
-                    maxLength={18}
-                    placeholder="802.800"
-                    autoComplete="off"
-                    className="h-full min-w-0 flex-1 bg-transparent px-3 text-2xl font-bold text-bone outline-none"
-                  />
-                </div>
-                <span className="text-xs leading-5 text-ash">Podés escribir, por ejemplo, 802800 o 802.800.</span>
-              </label>
-
-              <label className="grid gap-2 sm:col-span-2">
-                <span className="font-mono text-[0.68rem] uppercase tracking-mega text-ash">Concepto / producto</span>
-                <input
-                  required
-                  type="text"
-                  name="concepto"
-                  maxLength={120}
-                  placeholder="Ej.: Kit de embrague Volkswagen Vento 1.8T"
-                  autoComplete="off"
-                  className="h-12 border border-white/10 bg-white/[0.035] px-4 text-bone outline-none transition-colors focus:border-barpran"
-                />
-              </label>
-
-              <label className="grid gap-2">
-                <span className="font-mono text-[0.68rem] uppercase tracking-mega text-ash">Nombre y apellido</span>
-                <input
-                  required
-                  type="text"
-                  name="nombre"
-                  maxLength={100}
-                  autoComplete="name"
-                  className="h-12 border border-white/10 bg-white/[0.035] px-4 text-bone outline-none transition-colors focus:border-barpran"
-                />
-              </label>
-
-              <label className="grid gap-2">
-                <span className="font-mono text-[0.68rem] uppercase tracking-mega text-ash">WhatsApp</span>
-                <input
-                  required
-                  type="tel"
-                  name="whatsapp"
-                  maxLength={30}
-                  placeholder="11 7058 6143"
-                  autoComplete="tel"
-                  className="h-12 border border-white/10 bg-white/[0.035] px-4 text-bone outline-none transition-colors focus:border-barpran"
-                />
-              </label>
-
-              <label className="grid gap-2">
-                <span className="font-mono text-[0.68rem] uppercase tracking-mega text-ash">Vehículo (opcional)</span>
-                <input
-                  type="text"
-                  name="vehiculo"
-                  maxLength={100}
-                  placeholder="Ej.: Vento 2015 1.8T"
-                  autoComplete="off"
-                  className="h-12 border border-white/10 bg-white/[0.035] px-4 text-bone outline-none transition-colors focus:border-barpran"
-                />
-              </label>
-
-              <label className="grid gap-2">
-                <span className="font-mono text-[0.68rem] uppercase tracking-mega text-ash">N° presupuesto / referencia (opcional)</span>
-                <input
-                  type="text"
-                  name="referencia"
-                  maxLength={60}
-                  autoComplete="off"
-                  className="h-12 border border-white/10 bg-white/[0.035] px-4 text-bone outline-none transition-colors focus:border-barpran"
-                />
-              </label>
-
-              <label className="sm:col-span-2 flex cursor-pointer gap-3 border border-white/10 bg-white/[0.025] p-4 text-sm leading-6 text-ash">
-                <input required type="checkbox" name="confirmado" value="si" className="mt-1 h-4 w-4 accent-red-600" />
-                <span>
-                  Confirmo que el monto ingresado coincide con el importe que me informó previamente <strong className="text-bone">BARPRAN</strong>.
-                </span>
-              </label>
-
-              <button
-                type="submit"
-                className="sm:col-span-2 bg-barpran px-5 py-4 font-mono text-xs font-bold uppercase tracking-mega text-white transition-opacity hover:opacity-90"
-              >
-                Continuar a pago seguro →
-              </button>
-            </form>
+            <PaymentForm plans={plans} />
           </div>
 
           <aside className="h-fit border border-white/10 bg-white/[0.025] p-6 lg:sticky lg:top-28 md:p-8">
             <p className="tech-label">Antes de pagar</p>
             <h3 className="mt-3 text-2xl font-bold">Verificá el importe</h3>
             <p className="mt-4 text-sm leading-6 text-ash">
-              Esta página no calcula precios ni presupuestos. El monto debe haber sido informado previamente por un asesor de BARPRAN.
+              El monto que ingresás es el precio de contado informado por BARPRAN. Si elegís cuotas, la página calcula y muestra el importe financiado antes de enviarte a Payway.
             </p>
 
             <div className="mt-6 space-y-4 border-y border-white/10 py-6 text-sm text-ash">
               <div className="flex gap-3">
                 <span className="font-mono text-barpran">01</span>
-                <span>No ingreses un monto distinto al acordado.</span>
+                <span>1 pago mantiene el importe de contado.</span>
               </div>
               <div className="flex gap-3">
                 <span className="font-mono text-barpran">02</span>
-                <span>Describí claramente qué estás abonando.</span>
+                <span>{financingAvailable ? "Las cuotas incluyen el costo financiero en el total mostrado." : "Las cuotas se habilitarán cuando estén configuradas para el comercio."}</span>
               </div>
               <div className="flex gap-3">
                 <span className="font-mono text-barpran">03</span>
