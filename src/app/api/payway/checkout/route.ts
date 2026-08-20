@@ -6,6 +6,8 @@ const PAYWAY_PRODUCTION_API = "https://ventasonline.payway.com.ar/api/v1/checkou
 const PAYWAY_PRODUCTION_WEB = "https://live.decidir.com/web/checkout";
 const PAYWAY_TEMPLATE_ID = 1;
 const MAX_AMOUNT = 100_000_000;
+const MIPYME_3_COEF = 1.0912;
+const MIPYME_6_COEF = 1.1870;
 
 function clean(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
@@ -125,23 +127,10 @@ export async function POST(request: NextRequest) {
 
   let coefficient = 1;
   if (installments === 3) {
-    coefficient = production
-      ? positiveCoefficient(process.env.NEXT_PUBLIC_PAYWAY_COEF_3_PROD) ?? 0
-      : 1.0912;
+    coefficient = positiveCoefficient(process.env.NEXT_PUBLIC_PAYWAY_COEF_3_PROD) ?? MIPYME_3_COEF;
   }
   if (installments === 6) {
-    coefficient = production
-      ? positiveCoefficient(process.env.NEXT_PUBLIC_PAYWAY_COEF_6_PROD) ?? 0
-      : 1.1870;
-  }
-
-  // En producción nunca habilitamos cuotas si no hay un coeficiente explícito cargado.
-  if (installments > 1 && coefficient <= 1) {
-    console.error("Payway installment coefficient missing", {
-      environment: production ? "production" : "sandbox",
-      installments,
-    });
-    return checkoutError(request, "cuotas");
+    coefficient = positiveCoefficient(process.env.NEXT_PUBLIC_PAYWAY_COEF_6_PROD) ?? MIPYME_6_COEF;
   }
 
   const totalPrice = Number((cashPrice * coefficient).toFixed(2));
@@ -163,7 +152,7 @@ export async function POST(request: NextRequest) {
   const descriptionParts = [concepto];
   if (vehiculo) descriptionParts.push(vehiculo);
   if (referencia) descriptionParts.push(`Ref ${referencia}`);
-  descriptionParts.push(installments === 1 ? "1 pago" : `${installments} cuotas`);
+  descriptionParts.push(installments === 1 ? "1 pago" : `${installments} cuotas MiPyME`);
 
   const payload = {
     origin_platform: "BARPRAN-NEXTJS",
@@ -176,7 +165,8 @@ export async function POST(request: NextRequest) {
     notifications_url: notificationsUrl,
     template_id: PAYWAY_TEMPLATE_ID,
     installments: [installments],
-    plan_gobierno: false,
+    // Payway usa este flag para planes de financiación especiales, incluido Cuotas MiPyME.
+    plan_gobierno: installments > 1,
     public_apikey: publicKey,
     auth_3ds: false,
   };
@@ -217,6 +207,7 @@ export async function POST(request: NextRequest) {
             totalPrice,
             installments,
             coefficient,
+            plan_gobierno: installments > 1,
             template_id: PAYWAY_TEMPLATE_ID,
             cancel_url: cancelUrl,
           },
