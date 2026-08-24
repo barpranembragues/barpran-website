@@ -3,6 +3,8 @@ import Link from "next/link";
 type SuccessPageProps = {
   searchParams: Promise<{
     monto?: string;
+    montoContado?: string;
+    cuotas?: string;
     concepto?: string;
   }>;
 };
@@ -20,8 +22,10 @@ function formatAmount(value?: string) {
 }
 
 export default async function CompraExitosaPage({ searchParams }: SuccessPageProps) {
-  const { monto, concepto } = await searchParams;
+  const { monto, montoContado, cuotas, concepto } = await searchParams;
   const formattedAmount = formatAmount(monto);
+  const formattedCashAmount = formatAmount(montoContado);
+  const installments = Number(cuotas || "1");
 
   return (
     <div className="min-h-screen bg-carbon pt-24 text-bone md:pt-28">
@@ -42,9 +46,18 @@ export default async function CompraExitosaPage({ searchParams }: SuccessPagePro
                 </div>
               )}
 
+              {formattedCashAmount && installments > 1 && (
+                <div>
+                  <p className="font-mono text-xs uppercase tracking-mega text-ash">Importe de contado</p>
+                  <p className="mt-2 text-xl font-bold">{formattedCashAmount}</p>
+                </div>
+              )}
+
               {formattedAmount && (
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-mega text-ash">Monto ingresado</p>
+                  <p className="font-mono text-xs uppercase tracking-mega text-ash">
+                    {installments > 1 ? `Total financiado · ${installments} cuotas` : "Monto abonado"}
+                  </p>
                   <p className="mt-2 text-2xl font-bold">{formattedAmount}</p>
                 </div>
               )}
@@ -52,7 +65,7 @@ export default async function CompraExitosaPage({ searchParams }: SuccessPagePro
           )}
 
           <p className="mt-6 text-xs leading-5 text-ash">
-            La forma de pago, tarjeta y cuotas fueron seleccionadas dentro de Payway. La acreditación y el estado definitivo de la operación se validan por separado antes de entregar mercadería o prestar el servicio.
+            La forma de pago fue seleccionada antes de ingresar a Payway. Los datos de la tarjeta y la confirmación final se procesan exclusivamente en Payway. La acreditación y el estado definitivo de la operación se validan por separado antes de entregar mercadería o prestar el servicio.
           </p>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2">
