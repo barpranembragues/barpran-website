@@ -1,3 +1,4 @@
+# Trigger de ejecución vía Pull Request para descargar las fotos oficiales de ACTC.
 import asyncio
 import re
 import unicodedata
@@ -195,7 +196,6 @@ async def main():
                 if not saved:
                     print("  FAILED TO SAVE")
 
-                # Volver al listado para el próximo piloto.
                 await page.goto(list_url, wait_until="networkidle", timeout=90000)
                 await page.wait_for_timeout(900)
                 anchors = page.locator("a")
