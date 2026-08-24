@@ -3,7 +3,7 @@ import PaymentForm from "./PaymentForm";
 
 export const metadata: Metadata = {
   title: "Pagá tu compra",
-  description: "Ingresá el monto y la descripción de tu compra para continuar de forma segura a Payway.",
+  description: "Ingresá el monto, la descripción y elegí 1 pago, 3 o 6 cuotas para continuar de forma segura a Payway.",
 };
 
 type TiendaPageProps = {
@@ -13,6 +13,7 @@ type TiendaPageProps = {
 const errorMessages: Record<string, string> = {
   datos: "Completá el monto y la descripción del producto para continuar.",
   monto: "Revisá el monto ingresado.",
+  cuotas: "La opción de cuotas seleccionada no está disponible en este momento.",
   config: "El pago online todavía no está disponible en este entorno.",
   payway: "Payway no pudo iniciar el pago. Probá nuevamente en unos minutos.",
 };
@@ -30,7 +31,7 @@ export default async function TiendaPage({ searchParams }: TiendaPageProps) {
             Pagá tu compra.<br />Simple y seguro.
           </h1>
           <p className="mt-6 max-w-2xl text-base leading-7 text-ash md:text-lg">
-            Ingresá únicamente el monto a abonar y una breve descripción del producto. Las tarjetas, cuotas y demás opciones de pago se eligen directamente en Payway.
+            Ingresá el monto a abonar, describí el producto y elegí si querés pagar en 1 pago, 3 o 6 cuotas. La tarjeta y la confirmación se completan directamente en Payway.
           </p>
         </div>
       </section>
@@ -40,7 +41,7 @@ export default async function TiendaPage({ searchParams }: TiendaPageProps) {
           <p className="tech-label text-barpran">Pago online</p>
           <h2 className="display mt-3 text-4xl md:text-5xl">Completá los datos</h2>
           <p className="mt-4 text-sm leading-6 text-ash">
-            Solo necesitamos estos dos datos para iniciar el checkout seguro de Payway.
+            Solo necesitás indicar monto, descripción y forma de pago para iniciar el checkout seguro.
           </p>
 
           {error && (
