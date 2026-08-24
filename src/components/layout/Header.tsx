@@ -50,12 +50,12 @@ export default function Header() {
             />
           </Link>
 
-          <nav className="hidden items-center gap-7 lg:flex">
+          <nav className="hidden items-center gap-4 lg:flex xl:gap-6">
             {NAV.map((item) => (
               <a
                 key={item.href}
                 href={resolveHref(item.href)}
-                className="group relative font-mono text-[0.68rem] uppercase tracking-mega text-ash transition-colors hover:text-bone"
+                className="group relative whitespace-nowrap font-mono text-[0.61rem] uppercase tracking-[0.19em] text-ash transition-colors hover:text-bone xl:text-[0.66rem] xl:tracking-mega"
               >
                 {item.label}
                 <span className="absolute -bottom-1.5 left-0 h-px w-0 bg-barpran transition-all duration-500 ease-race group-hover:w-full" />
@@ -63,7 +63,7 @@ export default function Header() {
             ))}
             <Link
               href="/tienda"
-              className="group relative font-mono text-[0.68rem] font-bold uppercase tracking-mega text-bone transition-colors hover:text-barpran"
+              className="group relative whitespace-nowrap font-mono text-[0.63rem] font-bold uppercase tracking-mega text-bone transition-colors hover:text-barpran xl:text-[0.68rem]"
             >
               Tienda
               <span className="absolute -bottom-1.5 left-0 h-px w-full bg-barpran" />
@@ -72,9 +72,9 @@ export default function Header() {
               href="https://wa.me/5491170586143?text=Hola%20BARPRAN%2C%20quiero%20hacer%20una%20consulta"
               target="_blank"
               rel="noopener noreferrer"
-              className="skewed border border-barpran/60 bg-barpran/10 px-5 py-2 text-bone transition-colors hover:bg-barpran"
+              className="skewed border border-barpran/60 bg-barpran/10 px-4 py-2 text-bone transition-colors hover:bg-barpran xl:px-5"
             >
-              <span className="block font-mono text-[0.72rem] uppercase tracking-mega">Contacto</span>
+              <span className="block font-mono text-[0.65rem] uppercase tracking-mega xl:text-[0.7rem]">Contacto</span>
             </a>
           </nav>
 
@@ -110,7 +110,7 @@ export default function Header() {
                   initial={{ opacity: 0, x: -30 }}
                   animate={{ opacity: 1, x: 0 }}
                   transition={{ delay: 0.1 + i * 0.06, ease: [0.16, 1, 0.3, 1] }}
-                  className="display border-b border-white/5 py-4 text-4xl text-bone"
+                  className="display border-b border-white/5 py-3 text-[clamp(1.75rem,8vw,2.5rem)] text-bone"
                 >
                   <span className="mr-3 font-mono text-sm not-italic text-barpran">0{i + 1}</span>
                   {item.label}
@@ -124,7 +124,7 @@ export default function Header() {
                 <Link
                   href="/tienda"
                   onClick={() => setOpen(false)}
-                  className="display block border-b border-white/5 py-4 text-4xl text-bone"
+                  className="display block border-b border-white/5 py-3 text-[clamp(1.75rem,8vw,2.5rem)] text-bone"
                 >
                   <span className="mr-3 font-mono text-sm not-italic text-barpran">07</span>
                   Tienda
