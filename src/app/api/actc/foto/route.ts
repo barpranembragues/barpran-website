@@ -67,19 +67,18 @@ function fallback(name: string) {
     status: 200,
     headers: {
       "Content-Type": "image/svg+xml; charset=utf-8",
-      "Cache-Control": "public, max-age=3600, s-maxage=3600",
+      "Cache-Control": "public, max-age=900, s-maxage=900",
     },
   });
 }
 
 async function findProfile(category: string, name: string) {
-  if (normalize(name) === "marcos di palma") {
-    return "https://www.actc.org.ar/tc/pilotos/2010/marcos-di-palma_525.html";
-  }
-
   const listUrl = `https://www.actc.org.ar/${category}/pilotos.html`;
   const listResponse = await fetch(listUrl, {
-    headers: { "User-Agent": "Mozilla/5.0 BARPRAN/1.0" },
+    headers: {
+      "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/151 Safari/537.36",
+      Accept: "text/html,application/xhtml+xml",
+    },
     next: { revalidate: 86400 },
   });
   if (!listResponse.ok) return null;
@@ -92,9 +91,12 @@ async function findProfile(category: string, name: string) {
   for (const anchor of anchors) {
     const href = anchor[1];
     const text = normalize(stripTags(anchor[2]));
-    if (!href || !text || !/pilotos/i.test(href)) continue;
+    if (!href || !text) continue;
+
     const score = targetTokens.reduce((sum, token) => sum + (text.includes(token) ? 1 : 0), 0);
-    if (score >= Math.max(2, targetTokens.length - 1) && (!best || score > best.score)) {
+    const looksLikeDriver = /pilotos?/i.test(href) || /piloto/i.test(anchor[0]);
+
+    if (looksLikeDriver && score >= Math.max(2, targetTokens.length - 1) && (!best || score > best.score)) {
       best = { href, score };
     }
   }
@@ -103,43 +105,86 @@ async function findProfile(category: string, name: string) {
   return new URL(best.href, listUrl).toString();
 }
 
+function scoreImage(src: string, surroundingText: string, name: string) {
+  const normalizedSrc = normalize(src);
+  const normalizedContext = normalize(surroundingText);
+  const surnameTokens = normalize(name).split(" ").filter((part) => part.length > 3);
+
+  let score = 0;
+  if (/piloto|pilotos|corredor|driver/.test(normalizedSrc)) score += 14;
+  if (/foto|imagen|image|upload|archivo|media/.test(normalizedSrc)) score += 6;
+  if (/piloto|corredor|driver/.test(normalizedContext)) score += 8;
+  if (surnameTokens.some((part) => normalizedSrc.includes(part))) score += 16;
+  if (surnameTokens.some((part) => normalizedContext.includes(part))) score += 10;
+  if (/logo|icon|favicon|banner|publicidad|sponsor|header|footer|tracker|pixel/.test(normalizedSrc)) score -= 30;
+  if (/\.svg($|\?)/i.test(src)) score -= 15;
+  if (/\.gif($|\?)/i.test(src)) score -= 8;
+  return score;
+}
+
 function extractImage(profileHtml: string, profileUrl: string, name: string) {
   const candidates: { src: string; score: number }[] = [];
-  const normalizedName = normalize(name);
-  const surnames = normalizedName.split(" ").slice(-2);
 
+  const pushCandidate = (raw: string | undefined, context: string, bonus = 0) => {
+    if (!raw) return;
+    const cleaned = raw
+      .trim()
+      .replace(/^['\"]|['\"]$/g, "")
+      .replace(/&amp;/gi, "&");
+    if (!cleaned || cleaned.startsWith("data:")) return;
+
+    try {
+      const absolute = new URL(cleaned, profileUrl).toString();
+      if (!/^https?:\/\//i.test(absolute)) return;
+      candidates.push({ src: absolute, score: scoreImage(absolute, context, name) + bonus });
+    } catch {
+      // ignorar URLs inválidas
+    }
+  };
+
+  // Metadatos sociales: normalmente contienen la foto principal de la ficha.
   for (const match of profileHtml.matchAll(/<meta\b[^>]*(?:property|name)=["'](?:og:image|twitter:image|twitter:image:src)["'][^>]*content=["']([^"']+)["'][^>]*>/gi)) {
-    candidates.push({ src: match[1], score: 20 });
+    pushCandidate(match[1], match[0], 35);
   }
   for (const match of profileHtml.matchAll(/<meta\b[^>]*content=["']([^"']+)["'][^>]*(?:property|name)=["'](?:og:image|twitter:image|twitter:image:src)["'][^>]*>/gi)) {
-    candidates.push({ src: match[1], score: 20 });
+    pushCandidate(match[1], match[0], 35);
   }
 
-  for (const match of profileHtml.matchAll(/<img\b[^>]*src=["']([^"']+)["'][^>]*>/gi)) {
-    const src = match[1];
-    const lower = normalize(src);
-    let score = 0;
-    if (/piloto|pilotos|corredor|driver/.test(lower)) score += 8;
-    if (/foto|imagen|image|archivo|upload/.test(lower)) score += 4;
-    if (surnames.some((part) => part.length > 3 && lower.includes(part))) score += 8;
-    if (/logo|icon|banner|publicidad|sponsor|header|footer/.test(lower)) score -= 12;
-    if (/\.svg($|\?)/i.test(src)) score -= 10;
-    candidates.push({ src, score });
-  }
+  // Imágenes convencionales y lazy-load.
+  for (const match of profileHtml.matchAll(/<img\b[^>]*>/gi)) {
+    const tag = match[0];
+    const attrs = ["src", "data-src", "data-original", "data-lazy-src", "data-image", "data-url"];
+    for (const attr of attrs) {
+      const value = tag.match(new RegExp(`${attr}=["']([^"']+)["']`, "i"))?.[1];
+      pushCandidate(value, tag, attr === "src" ? 14 : 18);
+    }
 
-  const valid = candidates
-    .map((item) => {
-      try {
-        return { ...item, src: new URL(item.src, profileUrl).toString() };
-      } catch {
-        return null;
+    const srcset = tag.match(/(?:srcset|data-srcset)=["']([^"']+)["']/i)?.[1];
+    if (srcset) {
+      for (const part of srcset.split(",")) {
+        pushCandidate(part.trim().split(/\s+/)[0], tag, 16);
       }
-    })
-    .filter((item): item is { src: string; score: number } => Boolean(item))
-    .filter((item) => /^https?:\/\//i.test(item.src))
-    .sort((a, b) => b.score - a.score);
+    }
+  }
 
-  return valid[0]?.src || null;
+  // Imágenes aplicadas mediante background-image/url(...).
+  for (const match of profileHtml.matchAll(/url\((?:['\"]?)([^)'\"]+)(?:['\"]?)\)/gi)) {
+    pushCandidate(match[1], match[0], 12);
+  }
+
+  // Último recurso: cualquier archivo de imagen mencionado en el HTML.
+  for (const match of profileHtml.matchAll(/(?:https?:\/\/|\/|\.\.\/|\.\/)[^\s'\"<>]+\.(?:jpe?g|png|webp)(?:\?[^\s'\"<>]*)?/gi)) {
+    pushCandidate(match[0], match[0], 4);
+  }
+
+  const unique = new Map<string, number>();
+  for (const candidate of candidates) {
+    unique.set(candidate.src, Math.max(unique.get(candidate.src) ?? -999, candidate.score));
+  }
+
+  return [...unique.entries()]
+    .map(([src, score]) => ({ src, score }))
+    .sort((a, b) => b.score - a.score)[0]?.src || null;
 }
 
 export async function GET(request: NextRequest) {
@@ -153,7 +198,10 @@ export async function GET(request: NextRequest) {
     if (!profileUrl) return fallback(name);
 
     const profileResponse = await fetch(profileUrl, {
-      headers: { "User-Agent": "Mozilla/5.0 BARPRAN/1.0" },
+      headers: {
+        "User-Agent": "Mozilla/5.0 (Windows NT 10.0; Win64; x64) AppleWebKit/537.36 Chrome/151 Safari/537.36",
+        Accept: "text/html,application/xhtml+xml",
+      },
       next: { revalidate: 86400 },
     });
     if (!profileResponse.ok) return fallback(name);
@@ -162,25 +210,11 @@ export async function GET(request: NextRequest) {
     const imageUrl = extractImage(profileHtml, profileUrl, name);
     if (!imageUrl) return fallback(name);
 
-    const imageResponse = await fetch(imageUrl, {
-      headers: {
-        "User-Agent": "Mozilla/5.0 BARPRAN/1.0",
-        Referer: profileUrl,
-      },
-      next: { revalidate: 86400 },
-    });
-    if (!imageResponse.ok) return fallback(name);
-
-    const contentType = imageResponse.headers.get("content-type") || "image/jpeg";
-    if (!contentType.startsWith("image/")) return fallback(name);
-
-    return new NextResponse(await imageResponse.arrayBuffer(), {
-      status: 200,
-      headers: {
-        "Content-Type": contentType,
-        "Cache-Control": "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800",
-      },
-    });
+    // Redirigimos al navegador hacia la imagen de ACTC. Esto evita que Netlify
+    // tenga que descargar/proxyficar el archivo y reduce bloqueos por hotlink.
+    const response = NextResponse.redirect(imageUrl, 307);
+    response.headers.set("Cache-Control", "public, max-age=86400, s-maxage=86400, stale-while-revalidate=604800");
+    return response;
   } catch {
     return fallback(name);
   }
