@@ -1,7 +1,6 @@
 /**
  * Contenido central del sitio BARPRAN.
  * Todo el texto editable vive acá para mantener un único punto de verdad.
- * Reemplazá cifras, descripciones e imágenes por las definitivas de la empresa.
  */
 
 export const SITE = {
@@ -23,26 +22,20 @@ export const NAV = [
   { label: "Competición", href: "#competicion" },
   { label: "Productos", href: "#productos" },
   { label: "Fabricación", href: "#fabricacion" },
-  { label: "Historia", href: "#historia" },
-  { label: "APLICACIONES ESPECIALES", href: "#aplicaciones-especiales" },
+  { label: "Reparaciones Estándar", href: "#reparaciones-estandar" },
+  { label: "Aplicaciones Especiales", href: "#aplicaciones-especiales" },
 ] as const;
 
 export const APLICACIONES_ESPECIALES = {
   id: "aplicaciones-especiales",
-
   eyebrow: "SOLUCIONES PARA TRABAJO PESADO",
-
   titulo: "APLICACIONES ESPECIALES",
-
   introduccion:
     "Ingeniería, reparación y mantenimiento para vehículos, equipos y maquinarias sometidos a condiciones de trabajo exigentes.",
-
   descripcion:
     "En BARPRAN brindamos soluciones especializadas en conjuntos de embrague pesados y sistemas de frenos para camiones, colectivos, buses, grúas, tractores y maquinaria vinculada con la industria agropecuaria.",
-
   empresas:
     "Trabajamos con pequeñas empresas, grandes compañías, talleres especializados y flotas de vehículos que necesitan confiabilidad, respuesta técnica y continuidad operativa.",
-
   servicios: [
     "Conjuntos de embrague para servicio pesado",
     "Reparación y mantenimiento de embragues",
@@ -53,22 +46,13 @@ export const APLICACIONES_ESPECIALES = {
     "Embragues para tractores y maquinaria agrícola",
     "Atención a empresas y flotas de vehículos",
   ],
-
-imagenes: [
-  {
-    src: "/pesado1.png",
-    alt: "Conjunto de embrague pesado BARPRAN",
-  },
-  {
-    src: "/pesado2.png",
-    alt: "Aplicación especial para vehículos pesados",
-  },
-  {
-    src: "/pesado3.png",
-    alt: "Servicio de embragues para camiones y maquinaria",
-  },
-],
+  imagenes: [
+    { src: "/pesado1.png", alt: "Conjunto de embrague pesado BARPRAN" },
+    { src: "/pesado2.png", alt: "Aplicación especial para vehículos pesados" },
+    { src: "/pesado3.png", alt: "Servicio de embragues para camiones y maquinaria" },
+  ],
 } as const;
+
 export const HERO = {
   eyebrow: "Desde 1971 · Argentina",
   titulo: ["BARPRAN", "EL EMBRAGUE DEL AUTOMOVILISMO"],
@@ -76,14 +60,7 @@ export const HERO = {
     "Diseñamos el punto exacto donde la potencia se convierte en tracción. Embragues de competición, transmisión de alto rendimiento e ingeniería de precisión nacida en la pista.",
   ctaPrimario: { label: "Conocé la ingeniería", href: "#ingenieria" },
   ctaSecundario: { label: "Ver competición", href: "#competicion" },
-  ticker: [
-    "INGENIERÍA",
-    "COMPETICIÓN",
-    "PRECISIÓN",
-    "RENDIMIENTO",
-    "FABRICACIÓN",
-    "TECNOLOGÍA",
-  ],
+  ticker: ["INGENIERÍA", "COMPETICIÓN", "PRECISIÓN", "RENDIMIENTO", "FABRICACIÓN", "TECNOLOGÍA"],
 } as const;
 
 export const STATS = [
@@ -96,7 +73,16 @@ export const STATS = [
 export const MANIFIESTO = {
   eyebrow: "Manifiesto",
   texto:
-    "No fabricamos solo embragues. Fabricamos el instante en que el motor y el asfalto se entienden. Cada pieza que diseña de BARPRAN está calculada para transmitir todo, sin perder nada.",
+    "No fabricamos solo embragues. Fabricamos el instante en que el motor y el asfalto se entienden. Cada pieza que diseña BARPRAN está calculada para transmitir todo, sin perder nada.",
+} as const;
+
+export const PILOTOS = {
+  id: "pilotos-barpran",
+  eyebrow: "AUTOMOVILISMO ARGENTINO",
+  titulo: "Elegido por los que\ncompiten de verdad",
+  bajada:
+    "Presencia real en TC, TC Mouras, TC Pista y TC Pick Up. Pilotos y equipos que confían en embragues BARPRAN cuando la exigencia es máxima.",
+  categorias: ["TC", "TC MOURAS", "TC PISTA", "TC PICK UP"],
 } as const;
 
 export const INGENIERIA = {
@@ -107,26 +93,10 @@ export const INGENIERIA = {
   bajada:
     "Cada embrague BARPRAN nace en el banco de diseño: simulación de cargas, selección de materiales de fricción y validación dinámica antes de tocar la pista.",
   pilares: [
-    {
-      titulo: "Diseño y cálculo",
-      texto:
-        "Modelado del conjunto, presión y temperatura para definir el comportamiento del embrague en cada régimen de uso.",
-    },
-    {
-      titulo: "Mecanizado de precisión",
-      texto:
-        "Centros CNC y rectificado de superficies de contacto con tolerancias controladas micra a micra.",
-    },
-    {
-      titulo: "Balanceo dinámico",
-      texto:
-        "Equilibrado del conjunto para eliminar vibraciones a alto régimen y prolongar la vida útil.",
-    },
-    {
-      titulo: "Desarrollo de fricción",
-      texto:
-        "Formulación y ensayo de materiales orgánicos, cerámicos y aceros según la aplicación.",
-    },
+    { titulo: "Diseño y cálculo", texto: "Modelado del conjunto, presión y temperatura para definir el comportamiento del embrague en cada régimen de uso." },
+    { titulo: "Mecanizado de precisión", texto: "Centros CNC y rectificado de superficies de contacto con tolerancias controladas micra a micra." },
+    { titulo: "Balanceo dinámico", texto: "Equilibrado del conjunto para eliminar vibraciones a alto régimen y prolongar la vida útil." },
+    { titulo: "Desarrollo de fricción", texto: "Formulación y ensayo de materiales orgánicos, cerámicos y aceros según la aplicación." },
   ],
 } as const;
 
@@ -138,10 +108,10 @@ export const COMPETICION = {
   bajada:
     "Lo que aprendemos compitiendo lo trasladamos a cada producto de serie. La pista es nuestro laboratorio más exigente.",
   disciplinas: [
-    { nombre: "Turismo Carretera", detalle: "Embragues multidisco de alta resistencia térmica." },
-    { nombre: "Rally / Track day", detalle: "Tolerancia a impactos, polvo y cambios bruscos de tracción." },
-    { nombre: "Pista / Circuito", detalle: "Respuesta inmediata y modulación precisa del pedal." },
-    { nombre: "Drag / Drift ", detalle: "Transmisión máxima  en largadas extremas." },
+    { nombre: "Turismo Carretera", detalle: "Embragues BARPRAN para la máxima categoría del automovilismo argentino." },
+    { nombre: "TC Mouras", detalle: "Desarrollo y confiabilidad para una de las principales categorías formativas de ACTC." },
+    { nombre: "TC Pista", detalle: "Rendimiento constante vuelta tras vuelta en autos de alta exigencia." },
+    { nombre: "TC Pick Up", detalle: "Transmisión de potencia y resistencia para las pick ups de competición." },
   ],
   cierre:
     "Cada largada es un dato. Cada vuelta, una validación. BARPRAN compite para que tu auto rinda más.",
@@ -154,39 +124,39 @@ export const PRODUCTOS = {
   titulo: "Un embrague para\ncada exigencia",
   items: [
     {
-  codigo: "MD-01",
-  nombre: "Monodisco",
-  resumen: "El equilibrio perfecto entre confort, rendimiento para calle y uso intensivo.",
-  imagen: "/monodisco.png",
-  specs: ["Conducción progresiva", "Larga vida útil", "Uso diario y deportivo"],
-},
-{
-  codigo: "BD-02",
-  nombre: "Bidisco",
-  resumen: "Doble disco para duplicar la capacidad del conjunto sin sacrificar manejabilidad.",
-  imagen: "/bidisco.png",
-  specs: ["Alta capacidad de par", "Menor peso por superficie", "Aplicaciones turbo"],
-},
-{
-  codigo: "MD-03",
-  nombre: "Multidisco",
-  resumen: "Máxima transmisión en mínimo diámetro. La referencia de la competición.",
-  imagen: "/multidisco.png",
-  specs: ["Reducción de inercia", "Respuesta inmediata", "Alta resistencia térmica"],
-},
+      codigo: "MD-01",
+      nombre: "Monodisco",
+      resumen: "El equilibrio perfecto entre confort, rendimiento para calle y uso intensivo.",
+      imagen: "/monodisco.png",
+      specs: ["Conducción progresiva", "Larga vida útil", "Uso diario y deportivo"],
+    },
+    {
+      codigo: "BD-02",
+      nombre: "Bidisco",
+      resumen: "Doble disco para duplicar la capacidad del conjunto sin sacrificar manejabilidad.",
+      imagen: "/bidisco.png",
+      specs: ["Alta capacidad de par", "Menor peso por superficie", "Aplicaciones turbo"],
+    },
+    {
+      codigo: "MD-03",
+      nombre: "Multidisco",
+      resumen: "Máxima transmisión en mínimo diámetro. La referencia de la competición.",
+      imagen: "/multidisco.png",
+      specs: ["Reducción de inercia", "Respuesta inmediata", "Alta resistencia térmica"],
+    },
     {
       codigo: "EC-04",
-      nombre: "Reacondicionado Estandar",
-      resumen: "Conjuntos racing desarrollados para las disciplinas más demandantes.",
+      nombre: "Reacondicionado Estándar",
+      resumen: "Recuperación profesional de placas, discos y volantes con procesos propios y más de 50 años de experiencia.",
       imagenes: [
-  "/Placa Vieja.png",
-  "/Placa Nueva.png",
-  "/Disco Viejo.png",
-  "/Disco Nuevo.png",
-  "/Volante Viejo.png",
-  "/Volante Nuevo.png",
-],
-      specs: ["Reparación de placas", "Reparación de discos", "Rectificado de Volantes"],
+        "/Placa Vieja.png",
+        "/Placa Nueva.png",
+        "/Disco Viejo.png",
+        "/Disco Nuevo.png",
+        "/Volante Viejo.png",
+        "/Volante Nuevo.png",
+      ],
+      specs: ["Reparación de placas", "Reparación de discos", "Rectificado de volantes"],
     },
     {
       codigo: "AP-05",
@@ -196,6 +166,38 @@ export const PRODUCTOS = {
       specs: ["Camiones", "Tractores", "AGRO"],
     },
   ],
+} as const;
+
+export const REPARACIONES_ESTANDAR = {
+  id: "reparaciones-estandar",
+  numero: "05",
+  eyebrow: "SERVICIO ESTÁNDAR",
+  titulo: "Tu embrague puede\ntener una segunda vida",
+  bajada:
+    "Más de 50 años reparando, reconstruyendo y recuperando embragues estándar con procesos propios, experiencia real y control técnico en cada etapa.",
+  introduccion:
+    "En BARPRAN recuperamos conjuntos de embrague estándar para devolverles funcionamiento, confiabilidad y vida útil. Cada conjunto se inspecciona, mecaniza y reconstruye según su estado real.",
+  servicios: [
+    "Reparación de placas de embrague",
+    "Reparación de discos",
+    "Rectificado de volantes",
+    "Reconstrucción de conjuntos estándar",
+    "Asesoramiento técnico",
+    "Atención a talleres, repuesteros y particulares",
+  ],
+  proceso: [
+    { paso: "Diagnóstico", texto: "Evaluación del conjunto y detección del desgaste." },
+    { paso: "Desarme y control", texto: "Inspección de placa, disco, volante y componentes asociados." },
+    { paso: "Recuperación", texto: "Mecanizado, reparación y rectificado de piezas recuperables." },
+    { paso: "Reemplazo", texto: "Renovación de materiales de fricción y componentes necesarios." },
+    { paso: "Control final", texto: "Verificación del conjunto antes de la entrega." },
+  ],
+  comparativas: [
+    { nombre: "Placa de embrague", antes: "/Placa Vieja.png", despues: "/Placa Nueva.png" },
+    { nombre: "Disco de embrague", antes: "/Disco Viejo.png", despues: "/Disco Nuevo.png" },
+    { nombre: "Volante de motor", antes: "/Volante Viejo.png", despues: "/Volante Nuevo.png" },
+  ],
+  cta: "https://wa.me/5491170586143?text=Hola%20BARPRAN%2C%20quiero%20cotizar%20una%20reparaci%C3%B3n%20de%20embrague",
 } as const;
 
 export const FABRICACION = {
@@ -216,7 +218,7 @@ export const FABRICACION = {
 
 export const HISTORIA = {
   id: "historia",
-  numero: "05",
+  numero: "06",
   eyebrow: "50 años de historia",
   titulo: "Medio siglo\nsobre el asfalto",
   hitos: [
@@ -225,13 +227,13 @@ export const HISTORIA = {
     { anio: "1998", titulo: "Entrada al automovilismo", texto: "Embragues BARPRAN debutan en la competición argentina." },
     { anio: "2010", titulo: "Tecnología multidisco", texto: "Desarrollo de conjuntos racing de mínima inercia." },
     { anio: "2024", titulo: "Ingeniería sin límites", texto: "Más de 50 años transmitiendo potencia, en todo el país." },
-    { anio: "2026", titulo: "Lideres en Argentina y Brasil", texto: "Competicion y Std" },
+    { anio: "2026", titulo: "Líderes en Argentina y Brasil", texto: "Competición y estándar." },
   ],
 } as const;
 
 export const CONTACTO = {
   id: "contacto",
-  numero: "06",
+  numero: "07",
   eyebrow: "Contacto",
   titulo: "Hablemos de\ntu próximo desarrollo",
   bajada:
@@ -260,9 +262,9 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     nombre: "Kit Monodisco 5 Pastillas",
     imagen: "/kit-monodisco-5-pastillas.jpg",
     precio: "$1.026.900",
-    descripcion: "Kit monodisco BARPRAN de máxima capacidad de par. Disco de 5 pastillas ceramicas para aplicaciones de alta exigencia en competición federada.",
+    descripcion: "Kit monodisco BARPRAN de máxima capacidad de par. Disco de 5 pastillas cerámicas para aplicaciones de alta exigencia en competición federada.",
     incluye: ["Placa de presión", "Disco 5 pastillas", "Rulemán de empuje"],
-    equivalencias: ["VW Vento", "Vw Bora", "Vw Passat", "Y mas"],
+    equivalencias: ["VW Vento", "VW Bora", "VW Passat", "Y más"],
     checkoutUrl: "https://mpago.la/2nRXRRo",
   },
   {
@@ -270,9 +272,9 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     nombre: "Kit Monodisco 4 Pastillas",
     imagen: "/kit-monodisco-4-pastillas.jpg",
     precio: "$802.800",
-    descripcion: "Kit monodisco BARPRAN con disco de 4 pastillas ceramicas. Equilibrio ideal entre agarre y modulación para pista y rally.",
+    descripcion: "Kit monodisco BARPRAN con disco de 4 pastillas cerámicas. Equilibrio ideal entre agarre y modulación para pista y rally.",
     incluye: ["Placa de presión", "Disco 4 pastillas", "Rulemán de empuje"],
-    equivalencias: ["Volkswagen Gol", "Volkswagen Voyage", "Volkswagen Fox", "Y mas"],
+    equivalencias: ["Volkswagen Gol", "Volkswagen Voyage", "Volkswagen Fox", "Y más"],
     checkoutUrl: "https://mpago.la/1w7dkeh",
   },
   {
@@ -280,16 +282,16 @@ export const SHOP_PRODUCTS: ShopProduct[] = [
     nombre: "Kit Monodisco 3 Pastillas",
     imagen: "/kit-monodisco-3-pastillas.jpg",
     precio: "$703.600",
-    descripcion: "Kit monodisco BARPRAN con disco de 3 pastillas ceramicas. Mayor progresividad de pedal, ideal para competición en categorías reglamentadas.",
+    descripcion: "Kit monodisco BARPRAN con disco de 3 pastillas cerámicas. Mayor progresividad de pedal, ideal para competición en categorías reglamentadas.",
     incluye: ["Placa de presión", "Disco 3 pastillas", "Rulemán de empuje"],
-    equivalencias: ["Tipo Fiat Uno", "Y mas"],
+    equivalencias: ["Tipo Fiat Uno", "Y más"],
     checkoutUrl: "https://mpago.la/1isPwSP",
   },
 ];
 
 export const TIENDA = {
   id: "tienda",
-  numero: "07",
+  numero: "08",
   eyebrow: "Tienda Competición",
   titulo: "Kits monodisco\nBARPRAN competición",
   bajada:
