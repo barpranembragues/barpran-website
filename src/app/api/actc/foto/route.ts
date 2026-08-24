@@ -73,6 +73,10 @@ function fallback(name: string) {
 }
 
 async function findProfile(category: string, name: string) {
+  if (normalize(name) === "marcos di palma") {
+    return "https://www.actc.org.ar/tc/pilotos/2010/marcos-di-palma_525.html";
+  }
+
   const listUrl = `https://www.actc.org.ar/${category}/pilotos.html`;
   const listResponse = await fetch(listUrl, {
     headers: { "User-Agent": "Mozilla/5.0 BARPRAN/1.0" },
