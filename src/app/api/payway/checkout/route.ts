@@ -6,7 +6,7 @@ const PAYWAY_PRODUCTION_API = "https://ventasonline.payway.com.ar/api/v1/checkou
 const PAYWAY_PRODUCTION_WEB = "https://live.decidir.com/web/checkout";
 const PAYWAY_TEMPLATE_ID = 1;
 const MAX_AMOUNT = 100_000_000;
-const CHECKOUT_VERSION = "simple-v3";
+const CHECKOUT_VERSION = "simple-v4-diagnostic";
 
 function clean(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
@@ -59,6 +59,36 @@ function checkoutError(request: NextRequest, code: string) {
   return NextResponse.redirect(url, 303);
 }
 
+function escapeHtml(value: string) {
+  return value
+    .replace(/&/g, "&amp;")
+    .replace(/</g, "&lt;")
+    .replace(/>/g, "&gt;")
+    .replace(/\"/g, "&quot;")
+    .replace(/'/g, "&#039;");
+}
+
+function safePaywayDetail(data: unknown) {
+  let text = typeof data === "string" ? data : JSON.stringify(data);
+  if (!text) text = "Sin detalle en la respuesta";
+  text = text
+    .replace(/(api[_-]?key|apikey|token|secret|authorization|credential)[\s\"':=]+[^,}\s]+/gi, "$1=[OCULTO]")
+    .slice(0, 1400);
+  return text;
+}
+
+function diagnosticResponse(status: number, data: unknown) {
+  const detail = escapeHtml(safePaywayDetail(data));
+  const html = `<!doctype html>
+<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Diagnóstico Payway</title>
+<style>body{margin:0;background:#090909;color:#f2f0eb;font-family:Arial,sans-serif}main{max-width:760px;margin:8vh auto;padding:32px;border:1px solid #333;background:#111}h1{margin-top:0}code,pre{font-family:Consolas,monospace}pre{white-space:pre-wrap;word-break:break-word;background:#1a1a1a;border:1px solid #333;padding:18px;color:#fff}a{color:#ff2929}</style></head>
+<body><main><p style="color:#ff2929;letter-spacing:.2em">DIAGNÓSTICO TEMPORAL PAYWAY</p><h1>Payway rechazó el checkout</h1><p>Estado HTTP: <strong>${status}</strong></p><pre>${detail}</pre><p>Mandame una captura de esta pantalla. No contiene las claves de BARPRAN.</p><p><a href="/tienda">Volver a la tienda</a></p></main></body></html>`;
+  return new NextResponse(html, {
+    status: 502,
+    headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
+  });
+}
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
 
@@ -84,7 +114,6 @@ export async function POST(request: NextRequest) {
     return checkoutError(request, "monto");
   }
 
-  // Solo el dominio oficial usa Producción. Deploy Previews permanecen en Sandbox.
   const production = isProductionHost(request);
   const publicKey = production
     ? process.env.NEXT_PUBLIC_PAYWAY_PUBLIC_KEY_PROD
@@ -126,7 +155,6 @@ export async function POST(request: NextRequest) {
     cancel_url: cancelUrl,
     notifications_url: notificationsUrl,
     template_id: PAYWAY_TEMPLATE_ID,
-    // Payway muestra las cuotas habilitadas sin forzar MiPyME/Plan Ahora.
     installments: [1, 3, 6],
     plan_gobierno: false,
     public_apikey: publicKey,
@@ -158,25 +186,17 @@ export async function POST(request: NextRequest) {
     }
 
     if (!response.ok || !data) {
-      console.error(
-        "Payway checkout error FULL",
-        JSON.stringify(
-          {
-            version: CHECKOUT_VERSION,
-            environment: production ? "production" : "sandbox",
-            status: response.status,
-            response: data,
-            amount,
-            installments: [1, 3, 6],
-            plan_gobierno: false,
-            template_id: PAYWAY_TEMPLATE_ID,
-            cancel_url: cancelUrl,
-          },
-          null,
-          2
-        )
-      );
-      return checkoutError(request, "payway");
+      console.error("Payway checkout error FULL", JSON.stringify({
+        version: CHECKOUT_VERSION,
+        environment: production ? "production" : "sandbox",
+        status: response.status,
+        response: data,
+        amount,
+        installments: [1, 3, 6],
+        plan_gobierno: false,
+        template_id: PAYWAY_TEMPLATE_ID,
+      }, null, 2));
+      return diagnosticResponse(response.status, data);
     }
 
     const result = data as Record<string, unknown>;
@@ -192,9 +212,9 @@ export async function POST(request: NextRequest) {
     }
 
     console.error("Payway checkout response without payment id", JSON.stringify(data, null, 2));
-    return checkoutError(request, "payway");
+    return diagnosticResponse(502, data);
   } catch (error) {
     console.error("Payway checkout request failed", error);
-    return checkoutError(request, "payway");
+    return diagnosticResponse(502, error instanceof Error ? error.message : "Error de conexión con Payway");
   }
 }
