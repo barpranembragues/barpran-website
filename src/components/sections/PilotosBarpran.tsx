@@ -17,6 +17,7 @@ function DriverImage({ name, category }: { name: string; category: string }) {
       src={src}
       alt={`${name} — piloto que utiliza embrague BARPRAN`}
       loading="lazy"
+      referrerPolicy="no-referrer"
       className="h-full w-full object-cover object-top grayscale-[15%] transition duration-700 group-hover:scale-[1.035] group-hover:grayscale-0"
     />
   );
@@ -88,7 +89,7 @@ export default function PilotosBarpran() {
             transition={{ duration: 0.45 }}
             className="mt-8 grid grid-cols-2 gap-3 sm:grid-cols-3 lg:grid-cols-4 xl:grid-cols-5"
           >
-            {drivers.map((driver, index) => (
+            {drivers.map((driver) => (
               <article
                 key={driver.nombre}
                 className="group relative overflow-hidden border border-white/[0.07] bg-graphite"
