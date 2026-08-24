@@ -6,6 +6,7 @@ const PAYWAY_PRODUCTION_API = "https://ventasonline.payway.com.ar/api/v1/checkou
 const PAYWAY_PRODUCTION_WEB = "https://live.decidir.com/web/checkout";
 const PAYWAY_TEMPLATE_ID = 1;
 const MAX_AMOUNT = 100_000_000;
+const CHECKOUT_VERSION = "simple-v2";
 
 function clean(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
@@ -61,8 +62,18 @@ function checkoutError(request: NextRequest, code: string) {
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
 
-  const montoRaw = clean(formData.get("monto"));
-  const concepto = clean(formData.get("concepto"));
+  const montoRaw = clean(formData.get("monto") ?? formData.get("amount"));
+  const concepto = clean(
+    formData.get("concepto") ??
+      formData.get("descripcion") ??
+      formData.get("description")
+  );
+
+  console.info("BARPRAN checkout", {
+    version: CHECKOUT_VERSION,
+    hasAmount: Boolean(montoRaw),
+    hasDescription: Boolean(concepto),
+  });
 
   if (!concepto || concepto.length > 120) {
     return checkoutError(request, "datos");
@@ -115,9 +126,8 @@ export async function POST(request: NextRequest) {
     cancel_url: cancelUrl,
     notifications_url: notificationsUrl,
     template_id: PAYWAY_TEMPLATE_ID,
-    // El cliente elige la forma de pago dentro de Payway, no en BARPRAN.
+    // La elección se realiza dentro del checkout de Payway.
     installments: [1, 3, 6],
-    // Habilita planes de financiación configurados para el comercio, como MiPyME.
     plan_gobierno: true,
     public_apikey: publicKey,
     auth_3ds: false,
@@ -152,6 +162,7 @@ export async function POST(request: NextRequest) {
         "Payway checkout error FULL",
         JSON.stringify(
           {
+            version: CHECKOUT_VERSION,
             environment: production ? "production" : "sandbox",
             status: response.status,
             response: data,
