@@ -6,8 +6,6 @@ const PAYWAY_PRODUCTION_API = "https://ventasonline.payway.com.ar/api/v1/checkou
 const PAYWAY_PRODUCTION_WEB = "https://live.decidir.com/web/checkout";
 const PAYWAY_TEMPLATE_ID = 1;
 const MAX_AMOUNT = 100_000_000;
-const MIPYME_3_COEF = 1.0912;
-const MIPYME_6_COEF = 1.1870;
 
 function clean(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
@@ -31,12 +29,6 @@ function parseArgentineAmount(value: string) {
   }
 
   return Number(compact.replace(/\./g, ""));
-}
-
-function positiveCoefficient(value?: string) {
-  if (!value) return null;
-  const coefficient = Number(value.replace(",", "."));
-  return Number.isFinite(coefficient) && coefficient > 1 ? coefficient : null;
 }
 
 function getRequestHost(request: NextRequest) {
@@ -70,35 +62,15 @@ export async function POST(request: NextRequest) {
   const formData = await request.formData();
 
   const montoRaw = clean(formData.get("monto"));
-  const cuotasRaw = clean(formData.get("cuotas"));
   const concepto = clean(formData.get("concepto"));
-  const nombre = clean(formData.get("nombre"));
-  const whatsapp = clean(formData.get("whatsapp"));
-  const vehiculo = clean(formData.get("vehiculo"));
-  const referencia = clean(formData.get("referencia"));
-  const confirmado = clean(formData.get("confirmado"));
 
-  if (!concepto || !nombre || !whatsapp) {
+  if (!concepto || concepto.length > 120) {
     return checkoutError(request, "datos");
   }
 
-  if (confirmado !== "si") {
-    return checkoutError(request, "confirmar");
-  }
-
-  const cashPrice = parseArgentineAmount(montoRaw);
-  if (!Number.isFinite(cashPrice) || cashPrice <= 0 || cashPrice > MAX_AMOUNT) {
+  const amount = parseArgentineAmount(montoRaw);
+  if (!Number.isFinite(amount) || amount <= 0 || amount > MAX_AMOUNT) {
     return checkoutError(request, "monto");
-  }
-
-  const installments = Number(cuotasRaw || "1");
-  if (![1, 3, 6].includes(installments)) {
-    return checkoutError(request, "cuotas");
-  }
-
-  const whatsappDigits = whatsapp.replace(/\D/g, "");
-  if (whatsappDigits.length < 8 || concepto.length > 120 || nombre.length > 100) {
-    return checkoutError(request, "datos");
   }
 
   // Solo el dominio oficial usa Producción. Deploy Previews permanecen en Sandbox.
@@ -125,48 +97,28 @@ export async function POST(request: NextRequest) {
     return checkoutError(request, "config");
   }
 
-  let coefficient = 1;
-  if (installments === 3) {
-    coefficient = positiveCoefficient(process.env.NEXT_PUBLIC_PAYWAY_COEF_3_PROD) ?? MIPYME_3_COEF;
-  }
-  if (installments === 6) {
-    coefficient = positiveCoefficient(process.env.NEXT_PUBLIC_PAYWAY_COEF_6_PROD) ?? MIPYME_6_COEF;
-  }
-
-  const totalPrice = Number((cashPrice * coefficient).toFixed(2));
-  if (!Number.isFinite(totalPrice) || totalPrice <= 0 || totalPrice > MAX_AMOUNT) {
-    return checkoutError(request, "monto");
-  }
-
   const baseUrl = getBaseUrl(request);
   const successUrl = new URL("/tienda/compra-exitosa", baseUrl);
-  successUrl.searchParams.set("monto", totalPrice.toFixed(2));
-  successUrl.searchParams.set("montoContado", cashPrice.toFixed(2));
-  successUrl.searchParams.set("cuotas", String(installments));
+  successUrl.searchParams.set("monto", amount.toFixed(2));
   successUrl.searchParams.set("concepto", concepto.slice(0, 120));
-  if (referencia) successUrl.searchParams.set("referencia", referencia.slice(0, 60));
 
   const cancelUrl = `${baseUrl}/tienda/cancelada`;
   const notificationsUrl = `${baseUrl}/api/payway/notificaciones`;
 
-  const descriptionParts = [concepto];
-  if (vehiculo) descriptionParts.push(vehiculo);
-  if (referencia) descriptionParts.push(`Ref ${referencia}`);
-  descriptionParts.push(installments === 1 ? "1 pago" : `${installments} cuotas MiPyME`);
-
   const payload = {
     origin_platform: "BARPRAN-NEXTJS",
-    payment_description: descriptionParts.join(" | ").slice(0, 250),
+    payment_description: concepto.slice(0, 250),
     currency: "ARS",
-    total_price: totalPrice,
+    total_price: Number(amount.toFixed(2)),
     site: siteId,
     success_url: successUrl.toString(),
     cancel_url: cancelUrl,
     notifications_url: notificationsUrl,
     template_id: PAYWAY_TEMPLATE_ID,
-    installments: [installments],
-    // Payway usa este flag para planes de financiación especiales, incluido Cuotas MiPyME.
-    plan_gobierno: installments > 1,
+    // El cliente elige la forma de pago dentro de Payway, no en BARPRAN.
+    installments: [1, 3, 6],
+    // Habilita planes de financiación configurados para el comercio, como MiPyME.
+    plan_gobierno: true,
     public_apikey: publicKey,
     auth_3ds: false,
   };
@@ -203,11 +155,9 @@ export async function POST(request: NextRequest) {
             environment: production ? "production" : "sandbox",
             status: response.status,
             response: data,
-            cashPrice,
-            totalPrice,
-            installments,
-            coefficient,
-            plan_gobierno: installments > 1,
+            amount,
+            installments: [1, 3, 6],
+            plan_gobierno: true,
             template_id: PAYWAY_TEMPLATE_ID,
             cancel_url: cancelUrl,
           },
