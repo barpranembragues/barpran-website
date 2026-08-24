@@ -5,6 +5,10 @@ on:
     paths:
       - ".github/workflows/scrape-actc-pilotos.yml"
       - "scripts/scrape_actc_pilotos.py"
+  pull_request:
+    paths:
+      - ".github/workflows/scrape-actc-pilotos.yml"
+      - "scripts/scrape_actc_pilotos.py"
   workflow_dispatch:
 
 permissions:
@@ -36,7 +40,15 @@ jobs:
         run: |
           find public/pilotos -maxdepth 1 -type f -printf '%f %s bytes\n' | sort || true
 
-      - name: Commit pilot photos
+      - name: Upload scraped photos
+        uses: actions/upload-artifact@v4
+        with:
+          name: actc-pilot-photos
+          path: public/pilotos
+          if-no-files-found: warn
+
+      - name: Commit pilot photos on push runs only
+        if: github.event_name == 'push'
         run: |
           git config user.name "barpran-bot"
           git config user.email "admin@barpran.com"
