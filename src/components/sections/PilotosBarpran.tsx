@@ -10,15 +10,29 @@ import Reveal from "@/components/ui/Reveal";
 const tabs = ["TC", "TC PISTA", "LEYENDAS"] as const;
 type Tab = (typeof tabs)[number];
 
+function pilotSlug(name: string) {
+  return name
+    .normalize("NFD")
+    .replace(/[\u0300-\u036f]/g, "")
+    .toLowerCase()
+    .replace(/[^a-z0-9]+/g, "-")
+    .replace(/^-+|-+$/g, "");
+}
+
 function DriverImage({ name, category }: { name: string; category: string }) {
-  const src = `/api/actc/foto?cat=${encodeURIComponent(category)}&name=${encodeURIComponent(name)}`;
+  const localSrc = `/pilotos/${pilotSlug(name)}.png`;
+  const fallbackSrc = `/api/actc/foto?cat=${encodeURIComponent(category)}&name=${encodeURIComponent(name)}`;
+  const [src, setSrc] = useState(localSrc);
+
   return (
     <img
       src={src}
       alt={`${name} — piloto que utiliza embrague BARPRAN`}
       loading="lazy"
-      referrerPolicy="no-referrer"
-      className="h-full w-full object-cover object-top grayscale-[15%] transition duration-700 group-hover:scale-[1.035] group-hover:grayscale-0"
+      onError={() => {
+        if (src !== fallbackSrc) setSrc(fallbackSrc);
+      }}
+      className="h-full w-full object-contain object-bottom transition duration-700 group-hover:scale-[1.035]"
     />
   );
 }
@@ -94,9 +108,9 @@ export default function PilotosBarpran() {
                 key={driver.nombre}
                 className="group relative overflow-hidden border border-white/[0.07] bg-graphite"
               >
-                <div className="relative aspect-[4/5] overflow-hidden bg-steel">
+                <div className="relative aspect-[4/5] overflow-hidden bg-gradient-to-b from-steel to-carbon">
                   <DriverImage name={driver.nombre} category={driver.actcCategory} />
-                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black via-black/5 to-transparent" />
+                  <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
                   <span className="absolute left-3 top-3 border border-white/15 bg-black/55 px-2 py-1 font-mono text-[0.55rem] uppercase tracking-mega text-bone backdrop-blur">
                     {driver.categoria}
                   </span>
@@ -123,7 +137,7 @@ export default function PilotosBarpran() {
             className="mt-8 overflow-hidden border border-white/[0.07] bg-graphite"
           >
             <div className="grid md:grid-cols-[.75fr_1.25fr]">
-              <div className="group relative min-h-[430px] overflow-hidden bg-steel">
+              <div className="group relative min-h-[430px] overflow-hidden bg-gradient-to-b from-steel to-carbon">
                 <DriverImage name={MARCOS_DI_PALMA.nombre} category="tc" />
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
               </div>
