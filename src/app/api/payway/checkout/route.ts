@@ -5,7 +5,7 @@ const PAYWAY_SANDBOX_WEB = "https://developers.decidir.com/web/checkout";
 const PAYWAY_PRODUCTION_API = "https://ventasonline.payway.com.ar/api/v1/checkout-payment-button/link";
 const PAYWAY_PRODUCTION_WEB = "https://live.decidir.com/web/checkout";
 const MAX_AMOUNT = 100_000_000;
-const CHECKOUT_VERSION = "simple-v5-template-real";
+const CHECKOUT_VERSION = "simple-v6-template-fallback";
 
 // IDs de plantilla asignados por Payway al comercio BARPRAN.
 // Pueden sobreescribirse desde Netlify sin modificar el código.
@@ -63,6 +63,48 @@ function checkoutError(request: NextRequest, code: string) {
   return NextResponse.redirect(url, 303);
 }
 
+function installmentsParameterRequired(data: unknown) {
+  if (!data || typeof data !== "object") return false;
+
+  const response = data as {
+    validation_errors?: Array<{ code?: string; param?: string }>;
+  };
+
+  return Boolean(
+    response.validation_errors?.some(
+      (error) => error?.code === "param_required" && error?.param === "installments"
+    )
+  );
+}
+
+async function createPaywayCheckout(
+  checkoutApi: string,
+  privateKey: string,
+  xSource: string,
+  payload: Record<string, unknown>
+) {
+  const response = await fetch(checkoutApi, {
+    method: "POST",
+    headers: {
+      apikey: privateKey,
+      "Content-Type": "application/json",
+      "X-Source": xSource,
+    },
+    body: JSON.stringify(payload),
+    cache: "no-store",
+  });
+
+  const raw = await response.text();
+  let data: unknown = null;
+  try {
+    data = raw ? JSON.parse(raw) : null;
+  } catch {
+    data = raw;
+  }
+
+  return { response, data };
+}
+
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
 
@@ -115,17 +157,15 @@ export async function POST(request: NextRequest) {
   const cancelUrl = `${baseUrl}/tienda/cancelada`;
   const notificationsUrl = `${baseUrl}/api/payway/notificaciones`;
 
-  const payload = {
+  const basePayload = {
     origin_platform: "BARPRAN-NEXTJS",
     payment_description: concepto.slice(0, 250),
-    currency: "ARS",
     total_price: Number(amount.toFixed(2)),
     site: siteId,
     success_url: successUrl.toString(),
     cancel_url: cancelUrl,
     notifications_url: notificationsUrl,
     template_id: templateId,
-    installments: [1, 3, 6],
     plan_gobierno: false,
     public_apikey: publicKey,
     auth_3ds: false,
@@ -136,24 +176,32 @@ export async function POST(request: NextRequest) {
       JSON.stringify({ service: "SDK-NODE", grouper: "BARPRAN", developer: "BARPRAN" })
     ).toString("base64");
 
-    const response = await fetch(checkoutApi, {
-      method: "POST",
-      headers: {
-        apikey: privateKey,
-        "Content-Type": "application/json",
-        "X-Source": xSource,
-      },
-      body: JSON.stringify(payload),
-      cache: "no-store",
+    let requestedInstallments = [1, 3, 6];
+    let attempt = await createPaywayCheckout(checkoutApi, privateKey, xSource, {
+      ...basePayload,
+      installments: requestedInstallments,
     });
 
-    const raw = await response.text();
-    let data: unknown = null;
-    try {
-      data = raw ? JSON.parse(raw) : null;
-    } catch {
-      data = raw;
+    // Algunos comercios de Payment Button rechazan múltiples alternativas en una misma
+    // solicitud aunque el modelo oficial acepte int[]. Si Payway responde específicamente
+    // que installments no fue recibido, reintentamos con el formato que BARPRAN ya usaba
+    // correctamente: una sola alternativa. La plantilla real queda a cargo de mostrar
+    // las opciones adicionales que Payway tenga habilitadas para el comercio.
+    if (!attempt.response.ok && installmentsParameterRequired(attempt.data)) {
+      requestedInstallments = [1];
+      console.warn("Payway retrying checkout with single installment option", {
+        version: CHECKOUT_VERSION,
+        environment: production ? "production" : "sandbox",
+        templateId,
+      });
+
+      attempt = await createPaywayCheckout(checkoutApi, privateKey, xSource, {
+        ...basePayload,
+        installments: requestedInstallments,
+      });
     }
+
+    const { response, data } = attempt;
 
     if (!response.ok || !data) {
       console.error(
@@ -165,7 +213,7 @@ export async function POST(request: NextRequest) {
             status: response.status,
             response: data,
             amount,
-            installments: [1, 3, 6],
+            installments: requestedInstallments,
             plan_gobierno: false,
             template_id: templateId,
           },
