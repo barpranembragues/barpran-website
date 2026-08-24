@@ -33,8 +33,21 @@ export default function PaymentForm() {
         />
       </label>
 
+      <label className="grid gap-2">
+        <span className="font-mono text-[0.68rem] uppercase tracking-mega text-ash">Forma de pago</span>
+        <select
+          name="cuotas"
+          defaultValue="1"
+          className="h-14 border border-white/10 bg-[#171719] px-4 text-bone outline-none transition-colors focus:border-barpran"
+        >
+          <option value="1">1 pago</option>
+          <option value="3">3 cuotas</option>
+          <option value="6">6 cuotas</option>
+        </select>
+      </label>
+
       <p className="text-xs leading-5 text-ash">
-        En el siguiente paso Payway te mostrará los medios de pago, tarjetas y opciones de cuotas disponibles.
+        Si elegís cuotas, Payway te mostrará el importe final financiado antes de confirmar el pago. Los datos de la tarjeta se cargan únicamente en Payway.
       </p>
 
       <button
