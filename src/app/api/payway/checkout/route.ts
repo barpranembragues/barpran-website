@@ -5,10 +5,11 @@ const PAYWAY_SANDBOX_WEB = "https://developers.decidir.com/web/checkout";
 const PAYWAY_PRODUCTION_API = "https://ventasonline.payway.com.ar/api/v1/checkout-payment-button/link";
 const PAYWAY_PRODUCTION_WEB = "https://live.decidir.com/web/checkout";
 const MAX_AMOUNT = 100_000_000;
-const CHECKOUT_VERSION = "simple-v6-template-fallback";
+const CHECKOUT_VERSION = "simple-v7-current-payway-sdk";
+const PAYWAY_STANDARD_TEMPLATE_ID = 1;
 
-// IDs de plantilla asignados por Payway al comercio BARPRAN.
-// Pueden sobreescribirse desde Netlify sin modificar el código.
+// IDs históricos informados por el Portal Payway de BARPRAN.
+// Se prueban primero para conservar compatibilidad con la cuenta del comercio.
 const PAYWAY_TEMPLATE_ID_PROD = Number(process.env.PAYWAY_TEMPLATE_ID_PROD ?? "40982");
 const PAYWAY_TEMPLATE_ID_TEST = Number(process.env.PAYWAY_TEMPLATE_ID_TEST ?? "91375");
 
@@ -134,17 +135,23 @@ export async function POST(request: NextRequest) {
   const siteId = production
     ? process.env.PAYWAY_SITE_ID_PROD
     : process.env.PAYWAY_SITE_ID_TEST;
-  const templateId = production ? PAYWAY_TEMPLATE_ID_PROD : PAYWAY_TEMPLATE_ID_TEST;
+  const configuredTemplateId = production ? PAYWAY_TEMPLATE_ID_PROD : PAYWAY_TEMPLATE_ID_TEST;
   const checkoutApi = production ? PAYWAY_PRODUCTION_API : PAYWAY_SANDBOX_API;
   const checkoutWeb = production ? PAYWAY_PRODUCTION_WEB : PAYWAY_SANDBOX_WEB;
 
-  if (!publicKey || !privateKey || !siteId || !Number.isFinite(templateId) || templateId <= 0) {
+  if (
+    !publicKey ||
+    !privateKey ||
+    !siteId ||
+    !Number.isFinite(configuredTemplateId) ||
+    configuredTemplateId <= 0
+  ) {
     console.error("Payway config missing", {
       environment: production ? "production" : "sandbox",
       publicKey: Boolean(publicKey),
       privateKey: Boolean(privateKey),
       siteId: Boolean(siteId),
-      templateId: Number.isFinite(templateId) && templateId > 0,
+      templateId: Number.isFinite(configuredTemplateId) && configuredTemplateId > 0,
     });
     return checkoutError(request, "config");
   }
@@ -157,48 +164,70 @@ export async function POST(request: NextRequest) {
   const cancelUrl = `${baseUrl}/tienda/cancelada`;
   const notificationsUrl = `${baseUrl}/api/payway/notificaciones`;
 
-  const basePayload = {
-    origin_platform: "BARPRAN-NEXTJS",
+  const buildPayload = (templateId: number, installments: number[]) => ({
+    origin_platform: "SDK-Node",
     payment_description: concepto.slice(0, 250),
+    currency: "ARS",
     total_price: Number(amount.toFixed(2)),
     site: siteId,
     success_url: successUrl.toString(),
     cancel_url: cancelUrl,
     notifications_url: notificationsUrl,
     template_id: templateId,
+    installments,
     plan_gobierno: false,
     public_apikey: publicKey,
     auth_3ds: false,
-  };
+    // id_payment_method se omite deliberadamente: el SDK oficial indica que así
+    // Payway ofrece todos los medios de pago habilitados para el comercio.
+  });
 
   try {
     const xSource = Buffer.from(
       JSON.stringify({ service: "SDK-NODE", grouper: "BARPRAN", developer: "BARPRAN" })
     ).toString("base64");
 
+    let usedTemplateId = configuredTemplateId;
     let requestedInstallments = [1, 3, 6];
-    let attempt = await createPaywayCheckout(checkoutApi, privateKey, xSource, {
-      ...basePayload,
-      installments: requestedInstallments,
-    });
+    let attempt = await createPaywayCheckout(
+      checkoutApi,
+      privateKey,
+      xSource,
+      buildPayload(usedTemplateId, requestedInstallments)
+    );
 
-    // Algunos comercios de Payment Button rechazan múltiples alternativas en una misma
-    // solicitud aunque el modelo oficial acepte int[]. Si Payway responde específicamente
-    // que installments no fue recibido, reintentamos con el formato que BARPRAN ya usaba
-    // correctamente: una sola alternativa. La plantilla real queda a cargo de mostrar
-    // las opciones adicionales que Payway tenga habilitadas para el comercio.
+    // Compatibilidad con cuentas/plantillas que aceptan una sola opción por request.
     if (!attempt.response.ok && installmentsParameterRequired(attempt.data)) {
       requestedInstallments = [1];
-      console.warn("Payway retrying checkout with single installment option", {
-        version: CHECKOUT_VERSION,
-        environment: production ? "production" : "sandbox",
-        templateId,
-      });
+      attempt = await createPaywayCheckout(
+        checkoutApi,
+        privateKey,
+        xSource,
+        buildPayload(usedTemplateId, requestedInstallments)
+      );
+    }
 
-      attempt = await createPaywayCheckout(checkoutApi, privateKey, xSource, {
-        ...basePayload,
-        installments: requestedInstallments,
-      });
+    // El SDK oficial actual documenta template_id 1 para checkout estándar sin Cybersource.
+    // Si la plantilla histórica del portal falla, reintentamos con el template actual.
+    if (!attempt.response.ok && configuredTemplateId !== PAYWAY_STANDARD_TEMPLATE_ID) {
+      usedTemplateId = PAYWAY_STANDARD_TEMPLATE_ID;
+      requestedInstallments = [1, 3, 6];
+      attempt = await createPaywayCheckout(
+        checkoutApi,
+        privateKey,
+        xSource,
+        buildPayload(usedTemplateId, requestedInstallments)
+      );
+
+      if (!attempt.response.ok && installmentsParameterRequired(attempt.data)) {
+        requestedInstallments = [1];
+        attempt = await createPaywayCheckout(
+          checkoutApi,
+          privateKey,
+          xSource,
+          buildPayload(usedTemplateId, requestedInstallments)
+        );
+      }
     }
 
     const { response, data } = attempt;
@@ -214,8 +243,7 @@ export async function POST(request: NextRequest) {
             response: data,
             amount,
             installments: requestedInstallments,
-            plan_gobierno: false,
-            template_id: templateId,
+            template_id: usedTemplateId,
           },
           null,
           2
