@@ -13,8 +13,8 @@ export const CATEGORIAS_BARPRAN = [
 ] as const;
 
 export const PILOTOS_TC: PilotoBarpran[] = [
-  { nombre: "Agustín Canapino", categoria: "TC", actcCategory: "tc", destacado: "5× CAMPEÓN TC" },
-  { nombre: "Mariano Werner", categoria: "TC", actcCategory: "tc", destacado: "3× CAMPEÓN TC" },
+  { nombre: "Agustín Canapino", categoria: "TC", actcCategory: "tc", destacado: "MÚLTIPLE CAMPEÓN" },
+  { nombre: "Mariano Werner", categoria: "TC", actcCategory: "tc", destacado: "MÚLTIPLE CAMPEÓN" },
   { nombre: "Germán Todino", categoria: "TC", actcCategory: "tc" },
   { nombre: "Andrés Jakos", categoria: "TC", actcCategory: "tc" },
   { nombre: "Mauricio Lambiris", categoria: "TC", actcCategory: "tc" },
