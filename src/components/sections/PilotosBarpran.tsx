@@ -19,8 +19,16 @@ function pilotSlug(name: string) {
     .replace(/^-+|-+$/g, "");
 }
 
-function DriverImage({ name, category }: { name: string; category: string }) {
-  const localSrc = `/pilotos/${pilotSlug(name)}.png`;
+function DriverImage({
+  name,
+  category,
+  localSrcOverride,
+}: {
+  name: string;
+  category: string;
+  localSrcOverride?: string;
+}) {
+  const localSrc = localSrcOverride || `/pilotos/${pilotSlug(name)}.png`;
   const fallbackSrc = `/api/actc/foto?cat=${encodeURIComponent(category)}&name=${encodeURIComponent(name)}`;
   const [src, setSrc] = useState(localSrc);
 
@@ -30,7 +38,7 @@ function DriverImage({ name, category }: { name: string; category: string }) {
       alt={`${name} — piloto que utiliza embrague BARPRAN`}
       loading="lazy"
       onError={() => {
-        if (src !== fallbackSrc) setSrc(fallbackSrc);
+        if (src !== fallbackSrc && !localSrcOverride) setSrc(fallbackSrc);
       }}
       className="h-full w-full object-contain object-bottom transition duration-700 group-hover:scale-[1.035]"
     />
@@ -91,7 +99,7 @@ export default function PilotosBarpran() {
             </button>
           ))}
           <span className="ml-auto hidden self-center font-mono text-[0.62rem] uppercase tracking-mega text-ash md:block">
-            Fotografías oficiales · ACTC
+            Fotografías · ACTC / Archivo BARPRAN
           </span>
         </div>
 
@@ -138,7 +146,11 @@ export default function PilotosBarpran() {
           >
             <div className="grid md:grid-cols-[.75fr_1.25fr]">
               <div className="group relative min-h-[430px] overflow-hidden bg-gradient-to-b from-steel to-carbon">
-                <DriverImage name={MARCOS_DI_PALMA.nombre} category="tc" />
+                <DriverImage
+                  name={MARCOS_DI_PALMA.nombre}
+                  category="tc"
+                  localSrcOverride="/pilotos/marcos-di-palma.webp"
+                />
                 <div className="pointer-events-none absolute inset-0 bg-gradient-to-t from-black/80 via-transparent to-transparent" />
               </div>
               <div className="flex flex-col justify-center p-8 md:p-12 lg:p-16">
@@ -157,7 +169,7 @@ export default function PilotosBarpran() {
         )}
 
         <p className="mt-6 font-mono text-[0.58rem] leading-relaxed uppercase tracking-widest text-ash/70">
-          La selección publicada corresponde exclusivamente a pilotos y categorías informados por BARPRAN. ACTC se utiliza como fuente de fotografías y referencia de pilotos.
+          La selección publicada corresponde exclusivamente a pilotos y categorías informados por BARPRAN. ACTC se utiliza como fuente para las fotografías de pilotos actuales; Archivo BARPRAN para leyendas.
         </p>
       </div>
     </section>
