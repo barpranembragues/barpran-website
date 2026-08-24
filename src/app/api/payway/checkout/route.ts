@@ -4,9 +4,13 @@ const PAYWAY_SANDBOX_API = "https://developers.decidir.com/api/v1/checkout-payme
 const PAYWAY_SANDBOX_WEB = "https://developers.decidir.com/web/checkout";
 const PAYWAY_PRODUCTION_API = "https://ventasonline.payway.com.ar/api/v1/checkout-payment-button/link";
 const PAYWAY_PRODUCTION_WEB = "https://live.decidir.com/web/checkout";
-const PAYWAY_TEMPLATE_ID = 1;
 const MAX_AMOUNT = 100_000_000;
-const CHECKOUT_VERSION = "simple-v4-diagnostic";
+const CHECKOUT_VERSION = "simple-v5-template-real";
+
+// IDs de plantilla asignados por Payway al comercio BARPRAN.
+// Pueden sobreescribirse desde Netlify sin modificar el código.
+const PAYWAY_TEMPLATE_ID_PROD = Number(process.env.PAYWAY_TEMPLATE_ID_PROD ?? "40982");
+const PAYWAY_TEMPLATE_ID_TEST = Number(process.env.PAYWAY_TEMPLATE_ID_TEST ?? "91375");
 
 function clean(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
@@ -59,36 +63,6 @@ function checkoutError(request: NextRequest, code: string) {
   return NextResponse.redirect(url, 303);
 }
 
-function escapeHtml(value: string) {
-  return value
-    .replace(/&/g, "&amp;")
-    .replace(/</g, "&lt;")
-    .replace(/>/g, "&gt;")
-    .replace(/\"/g, "&quot;")
-    .replace(/'/g, "&#039;");
-}
-
-function safePaywayDetail(data: unknown) {
-  let text = typeof data === "string" ? data : JSON.stringify(data);
-  if (!text) text = "Sin detalle en la respuesta";
-  text = text
-    .replace(/(api[_-]?key|apikey|token|secret|authorization|credential)[\s\"':=]+[^,}\s]+/gi, "$1=[OCULTO]")
-    .slice(0, 1400);
-  return text;
-}
-
-function diagnosticResponse(status: number, data: unknown) {
-  const detail = escapeHtml(safePaywayDetail(data));
-  const html = `<!doctype html>
-<html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Diagnóstico Payway</title>
-<style>body{margin:0;background:#090909;color:#f2f0eb;font-family:Arial,sans-serif}main{max-width:760px;margin:8vh auto;padding:32px;border:1px solid #333;background:#111}h1{margin-top:0}code,pre{font-family:Consolas,monospace}pre{white-space:pre-wrap;word-break:break-word;background:#1a1a1a;border:1px solid #333;padding:18px;color:#fff}a{color:#ff2929}</style></head>
-<body><main><p style="color:#ff2929;letter-spacing:.2em">DIAGNÓSTICO TEMPORAL PAYWAY</p><h1>Payway rechazó el checkout</h1><p>Estado HTTP: <strong>${status}</strong></p><pre>${detail}</pre><p>Mandame una captura de esta pantalla. No contiene las claves de BARPRAN.</p><p><a href="/tienda">Volver a la tienda</a></p></main></body></html>`;
-  return new NextResponse(html, {
-    status: 502,
-    headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store" },
-  });
-}
-
 export async function POST(request: NextRequest) {
   const formData = await request.formData();
 
@@ -98,12 +72,6 @@ export async function POST(request: NextRequest) {
       formData.get("descripcion") ??
       formData.get("description")
   );
-
-  console.info("BARPRAN checkout", {
-    version: CHECKOUT_VERSION,
-    hasAmount: Boolean(montoRaw),
-    hasDescription: Boolean(concepto),
-  });
 
   if (!concepto || concepto.length > 120) {
     return checkoutError(request, "datos");
@@ -124,15 +92,17 @@ export async function POST(request: NextRequest) {
   const siteId = production
     ? process.env.PAYWAY_SITE_ID_PROD
     : process.env.PAYWAY_SITE_ID_TEST;
+  const templateId = production ? PAYWAY_TEMPLATE_ID_PROD : PAYWAY_TEMPLATE_ID_TEST;
   const checkoutApi = production ? PAYWAY_PRODUCTION_API : PAYWAY_SANDBOX_API;
   const checkoutWeb = production ? PAYWAY_PRODUCTION_WEB : PAYWAY_SANDBOX_WEB;
 
-  if (!publicKey || !privateKey || !siteId) {
+  if (!publicKey || !privateKey || !siteId || !Number.isFinite(templateId) || templateId <= 0) {
     console.error("Payway config missing", {
       environment: production ? "production" : "sandbox",
       publicKey: Boolean(publicKey),
       privateKey: Boolean(privateKey),
       siteId: Boolean(siteId),
+      templateId: Number.isFinite(templateId) && templateId > 0,
     });
     return checkoutError(request, "config");
   }
@@ -154,7 +124,7 @@ export async function POST(request: NextRequest) {
     success_url: successUrl.toString(),
     cancel_url: cancelUrl,
     notifications_url: notificationsUrl,
-    template_id: PAYWAY_TEMPLATE_ID,
+    template_id: templateId,
     installments: [1, 3, 6],
     plan_gobierno: false,
     public_apikey: publicKey,
@@ -186,17 +156,24 @@ export async function POST(request: NextRequest) {
     }
 
     if (!response.ok || !data) {
-      console.error("Payway checkout error FULL", JSON.stringify({
-        version: CHECKOUT_VERSION,
-        environment: production ? "production" : "sandbox",
-        status: response.status,
-        response: data,
-        amount,
-        installments: [1, 3, 6],
-        plan_gobierno: false,
-        template_id: PAYWAY_TEMPLATE_ID,
-      }, null, 2));
-      return diagnosticResponse(response.status, data);
+      console.error(
+        "Payway checkout error FULL",
+        JSON.stringify(
+          {
+            version: CHECKOUT_VERSION,
+            environment: production ? "production" : "sandbox",
+            status: response.status,
+            response: data,
+            amount,
+            installments: [1, 3, 6],
+            plan_gobierno: false,
+            template_id: templateId,
+          },
+          null,
+          2
+        )
+      );
+      return checkoutError(request, "payway");
     }
 
     const result = data as Record<string, unknown>;
@@ -212,9 +189,9 @@ export async function POST(request: NextRequest) {
     }
 
     console.error("Payway checkout response without payment id", JSON.stringify(data, null, 2));
-    return diagnosticResponse(502, data);
+    return checkoutError(request, "payway");
   } catch (error) {
     console.error("Payway checkout request failed", error);
-    return diagnosticResponse(502, error instanceof Error ? error.message : "Error de conexión con Payway");
+    return checkoutError(request, "payway");
   }
 }
