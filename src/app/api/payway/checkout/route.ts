@@ -6,7 +6,7 @@ const PAYWAY_PRODUCTION_API = "https://ventasonline.payway.com.ar/api/v1/checkou
 const PAYWAY_PRODUCTION_WEB = "https://live.decidir.com/web/checkout";
 const PAYWAY_TEMPLATE_ID = 1;
 const MAX_AMOUNT = 100_000_000;
-const CHECKOUT_VERSION = "simple-v2";
+const CHECKOUT_VERSION = "simple-v3";
 
 function clean(value: FormDataEntryValue | null) {
   return typeof value === "string" ? value.trim() : "";
@@ -126,9 +126,9 @@ export async function POST(request: NextRequest) {
     cancel_url: cancelUrl,
     notifications_url: notificationsUrl,
     template_id: PAYWAY_TEMPLATE_ID,
-    // La elección se realiza dentro del checkout de Payway.
+    // Payway muestra las cuotas habilitadas sin forzar MiPyME/Plan Ahora.
     installments: [1, 3, 6],
-    plan_gobierno: true,
+    plan_gobierno: false,
     public_apikey: publicKey,
     auth_3ds: false,
   };
@@ -168,7 +168,7 @@ export async function POST(request: NextRequest) {
             response: data,
             amount,
             installments: [1, 3, 6],
-            plan_gobierno: true,
+            plan_gobierno: false,
             template_id: PAYWAY_TEMPLATE_ID,
             cancel_url: cancelUrl,
           },
