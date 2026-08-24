@@ -3,10 +3,7 @@ import Link from "next/link";
 type SuccessPageProps = {
   searchParams: Promise<{
     monto?: string;
-    montoContado?: string;
-    cuotas?: string;
     concepto?: string;
-    referencia?: string;
   }>;
 };
 
@@ -23,15 +20,8 @@ function formatAmount(value?: string) {
 }
 
 export default async function CompraExitosaPage({ searchParams }: SuccessPageProps) {
-  const { monto, montoContado, cuotas, concepto, referencia } = await searchParams;
-  const formattedTotal = formatAmount(monto);
-  const formattedCash = formatAmount(montoContado);
-  const installmentCount = Number(cuotas || "1");
-  const totalNumber = Number(monto);
-  const installmentValue =
-    Number.isFinite(totalNumber) && totalNumber > 0 && Number.isFinite(installmentCount) && installmentCount > 0
-      ? formatAmount(String(totalNumber / installmentCount))
-      : null;
+  const { monto, concepto } = await searchParams;
+  const formattedAmount = formatAmount(monto);
 
   return (
     <div className="min-h-screen bg-carbon pt-24 text-bone md:pt-28">
@@ -43,47 +33,26 @@ export default async function CompraExitosaPage({ searchParams }: SuccessPagePro
             Payway finalizó el flujo de pago. BARPRAN verificará el estado definitivo de la operación antes de entregar, preparar o despachar el pedido.
           </p>
 
-          {(concepto || formattedTotal || referencia) && (
+          {(concepto || formattedAmount) && (
             <div className="mt-8 space-y-5 border-y border-white/10 py-6">
               {concepto && (
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-mega text-ash">Concepto</p>
+                  <p className="font-mono text-xs uppercase tracking-mega text-ash">Producto</p>
                   <p className="mt-2 text-xl font-bold">{concepto}</p>
                 </div>
               )}
 
-              {formattedCash && (
+              {formattedAmount && (
                 <div>
-                  <p className="font-mono text-xs uppercase tracking-mega text-ash">Precio de contado informado</p>
-                  <p className="mt-2 text-xl font-bold">{formattedCash}</p>
-                </div>
-              )}
-
-              {formattedTotal && (
-                <div>
-                  <p className="font-mono text-xs uppercase tracking-mega text-ash">
-                    {installmentCount > 1 ? "Total financiado" : "Importe abonado"}
-                  </p>
-                  <p className="mt-2 text-2xl font-bold">{formattedTotal}</p>
-                  {installmentCount > 1 && installmentValue && (
-                    <p className="mt-2 text-sm text-ash">
-                      {installmentCount} cuotas de {installmentValue} · Cuotas MiPyME
-                    </p>
-                  )}
-                </div>
-              )}
-
-              {referencia && (
-                <div>
-                  <p className="font-mono text-xs uppercase tracking-mega text-ash">Referencia</p>
-                  <p className="mt-2 text-bone">{referencia}</p>
+                  <p className="font-mono text-xs uppercase tracking-mega text-ash">Monto ingresado</p>
+                  <p className="mt-2 text-2xl font-bold">{formattedAmount}</p>
                 </div>
               )}
             </div>
           )}
 
           <p className="mt-6 text-xs leading-5 text-ash">
-            Esta pantalla confirma que Payway finalizó el flujo. La acreditación y el estado definitivo de la operación se validan por separado antes de entregar mercadería o prestar el servicio.
+            La forma de pago, tarjeta y cuotas fueron seleccionadas dentro de Payway. La acreditación y el estado definitivo de la operación se validan por separado antes de entregar mercadería o prestar el servicio.
           </p>
 
           <div className="mt-8 grid gap-3 sm:grid-cols-2">
