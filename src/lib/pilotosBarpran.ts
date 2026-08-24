@@ -49,7 +49,7 @@ export const PILOTOS_TC_PISTA: PilotoBarpran[] = [
   { nombre: "Manuel Borgert", categoria: "TC Pista", actcCategory: "tcp" },
   { nombre: "Benjamín Ochoa", categoria: "TC Pista", actcCategory: "tcp" },
   { nombre: "Nicanor Santilli Pazos", categoria: "TC Pista", actcCategory: "tcp" },
-  { nombre: "Brian Quevedo", categoria: "TC Pista", actcCategory: "tcp" },
+  { nombre: "Braian Quevedo", categoria: "TC Pista", actcCategory: "tcp" },
 ];
 
 export const MARCOS_DI_PALMA = {
