@@ -6,6 +6,7 @@ import Image from "next/image";
 import { HERO } from "@/lib/content";
 import { EASE_RACE } from "@/lib/motion";
 import ClutchDisc from "@/components/ui/ClutchDisc";
+import ClutchSalesCounter from "@/components/ui/ClutchSalesCounter";
 import SkewButton from "@/components/ui/SkewButton";
 import Marquee from "@/components/ui/Marquee";
 
@@ -22,33 +23,18 @@ export default function Hero() {
   return (
     <section ref={ref} id="hero" className="relative flex min-h-[100svh] flex-col overflow-hidden">
       <div className="absolute inset-0 z-0">
-  <Image
-    src="/carrera.png"
-    alt=""
-    fill
-    priority
-    className="object-cover object-center opacity-25 blur-sm scale-105"
-  />
-  <div className="absolute inset-0 bg-gradient-to-r from-carbon via-carbon/85 to-carbon/45" />
-  <div className="absolute inset-0 bg-black/35" />
-</div>
-      {/* ── Fondo cinematográfico ──
-          Para usar tu propio video, descomentá el <video> y dejá tu archivo
-          en /public/hero.mp4 (+ /public/hero-poster.jpg). */}
-      {/*
-      <video
-        autoPlay
-        muted
-        loop
-        playsInline
-        poster="/hero-poster.jpg"
-        className="absolute inset-0 h-full w-full object-cover"
-      >
-        <source src="/hero.mp4" type="video/mp4" />
-      </video>
-      */}
+        <Image
+          src="/carrera.png"
+          alt=""
+          fill
+          priority
+          className="object-cover object-center opacity-25 blur-sm scale-105"
+        />
+        <div className="absolute inset-0 bg-gradient-to-r from-carbon via-carbon/85 to-carbon/45" />
+        <div className="absolute inset-0 bg-black/35" />
+      </div>
 
-      {/* Fondo animado por defecto (sin video) */}
+      {/* Fondo animado por defecto */}
       <div className="absolute inset-0 bg-carbon">
         <div className="grid-tech absolute inset-0 opacity-50" />
         <motion.div
@@ -57,17 +43,38 @@ export default function Hero() {
         >
           <ClutchDisc className="h-full w-full" />
         </motion.div>
-        {/* Viñeta y degradados */}
         <div className="absolute inset-0 bg-gradient-to-r from-carbon via-carbon/70 to-transparent" />
         <div className="absolute inset-0 bg-gradient-to-t from-carbon via-transparent to-carbon/60" />
-        {/* Línea de escaneo */}
         <div className="pointer-events-none absolute inset-0 overflow-hidden">
           <div className="absolute inset-x-0 h-px animate-scan bg-gradient-to-r from-transparent via-barpran/40 to-transparent" />
         </div>
       </div>
 
+      {/* Contador histórico destacado */}
+      <div className="frame relative z-20 pt-20 md:pt-24">
+        <motion.div
+          initial={{ opacity: 0, y: -14 }}
+          animate={{ opacity: 1, y: 0 }}
+          transition={{ duration: 0.8, ease: EASE_RACE, delay: 0.35 }}
+          className="flex flex-col gap-3 border-y border-white/10 bg-carbon/35 py-4 backdrop-blur-sm md:flex-row md:items-end md:gap-8 md:py-5"
+        >
+          <ClutchSalesCounter className="text-[clamp(2.8rem,6vw,5.2rem)]" />
+          <div className="pb-1">
+            <p className="display text-[clamp(1rem,1.9vw,1.55rem)] uppercase leading-tight text-bone">
+              Embragues fabricados y reparados
+            </p>
+            <p className="mt-1.5 font-mono text-[0.62rem] uppercase tracking-mega text-ash md:text-[0.68rem]">
+              Desde 1971 · estimación histórica · actualización diaria
+            </p>
+          </div>
+        </motion.div>
+      </div>
+
       {/* Contenido */}
-     <motion.div style={{ y, opacity }} className="frame relative z-10 flex flex-1 flex-col justify-center pt-28 pb-32">
+      <motion.div
+        style={{ y, opacity }}
+        className="frame relative z-10 flex flex-1 flex-col justify-center pb-24 pt-8 md:pb-28 md:pt-10"
+      >
         <motion.div
           initial={{ opacity: 0, x: -20 }}
           animate={{ opacity: 1, x: 0 }}
@@ -79,6 +86,7 @@ export default function Hero() {
             {HERO.eyebrow}
           </span>
         </motion.div>
+
         <h1 className="display text-bone">
           {HERO.titulo.map((line, i) => (
             <span key={i} className="block overflow-hidden">
@@ -88,11 +96,7 @@ export default function Hero() {
                 transition={{ duration: 1, ease: EASE_RACE, delay: 0.6 + i * 0.12 }}
                 className="block text-[clamp(2.6rem,9vw,9.5rem)]"
               >
-                {i === 1 ? (
-                  <span className="text-barpran">{line}</span>
-                ) : (
-                  line
-                )}
+                {i === 1 ? <span className="text-barpran">{line}</span> : line}
               </motion.span>
             </span>
           ))}
@@ -139,9 +143,7 @@ export default function Hero() {
         transition={{ delay: 1.6 }}
         className="pointer-events-none absolute bottom-24 right-[var(--frame-x)] hidden items-center gap-3 md:flex"
       >
-        <span className="font-mono text-[0.66rem] uppercase tracking-mega text-ash">
-          Scroll
-        </span>
+        <span className="font-mono text-[0.66rem] uppercase tracking-mega text-ash">Scroll</span>
         <motion.span
           animate={{ y: [0, 8, 0] }}
           transition={{ duration: 1.8, repeat: Infinity, ease: "easeInOut" }}
