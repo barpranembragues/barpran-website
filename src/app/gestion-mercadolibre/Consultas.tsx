@@ -3,6 +3,15 @@ import { useState, type FormEvent } from "react";
 export default function Consultas() {
   const [result,setResult] = useState("");
   const [busy,setBusy] = useState(false);
+  let pictures: {id:string; secure_url:string}[] = [];
+  let itemTitle = "";
+  try {
+    const parsed = JSON.parse(result);
+    if(parsed.status===200 && Array.isArray(parsed.data?.pictures)) {
+      pictures=parsed.data.pictures.filter((p: {id?:unknown;secure_url?:unknown})=>typeof p.id==="string" && typeof p.secure_url==="string" && /^https:\/\/http2\.mlstatic\.com\//.test(p.secure_url));
+      itemTitle=typeof parsed.data.title==="string" ? parsed.data.title : "";
+    }
+  } catch { /* The query may still be pending or return an error message. */ }
   async function submit(event: FormEvent<HTMLFormElement>) {
     event.preventDefault(); setBusy(true); setResult("");
     const form = new FormData(event.currentTarget);
@@ -19,6 +28,8 @@ export default function Consultas() {
       <label className="grid gap-2">Identificador<input name="id" maxLength={80} className="bg-carbon border border-white/20 p-3" /></label>
       <label className="grid gap-2">Parámetros de consulta<textarea name="params" defaultValue="{}" maxLength={4000} rows={3} className="bg-carbon border border-white/20 p-3 font-mono" /></label>
       <button disabled={busy} className="bg-barpran p-4 font-bold disabled:opacity-50">{busy ? "Consultando…" : "Consultar Mercado Libre"}</button>
-    </form><pre aria-label="Resultado de consulta" className="mt-6 max-h-[600px] overflow-auto whitespace-pre-wrap break-words text-xs">{result}</pre>
+    </form>
+    {pictures.length>0 && <div className="mt-6" aria-label="Fotos actuales de la publicación"><h3 className="font-bold">{itemTitle}</h3><div className="mt-3 grid grid-cols-2 md:grid-cols-4 gap-3">{pictures.map((picture,index)=><figure key={picture.id} className="border border-white/20 p-2"><img src={picture.secure_url} alt={`Foto ${index+1} de la publicación`} className="w-full aspect-square object-contain bg-white" /><figcaption className="mt-2 text-sm">Foto {index+1}</figcaption></figure>)}</div></div>}
+    <pre aria-label="Resultado de consulta" className="mt-6 max-h-[600px] overflow-auto whitespace-pre-wrap break-words text-xs">{result}</pre>
   </section>;
 }

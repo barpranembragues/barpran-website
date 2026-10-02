@@ -151,7 +151,10 @@ export async function managementChange(c: Change) {
     }
     if (c.action==="description") {
       if (!c.description || c.description.length>20000) throw new Error("Descripción inválida");
-      return managementWrite(`/items/${c.id}/description`,"PUT",{plain_text:c.description});
+      const path = `/items/${c.id}/description`;
+      const existing = await managementApi(path);
+      if (existing.status!==200 && existing.status!==404) throw new Error("No se pudo verificar la descripción actual");
+      return managementWrite(path,existing.status===404 ? "POST" : "PUT",{plain_text:c.description});
     }
     if (!c.promotionId || !/^P-MLA\d+$/.test(c.promotionId) || !Number.isFinite(c.dealPrice)) throw new Error("Promoción inválida");
     const candidates = await managementApi(`/seller-promotions/items/${c.id}?app_version=v2`);

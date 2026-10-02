@@ -284,6 +284,24 @@ test('promotion changes reject seller discounts greater than six percent', async
  await assert.rejects(management.managementChange({action:'promotion',id:'MLA1',sku:'KE701290',promotionId:'P-MLA1',dealPrice:180000}));
 });
 
+test('descriptions use POST only when absent and reject failed reads before writing', async()=>{
+ const management=require('../.testbuild/ml-management.js');const delegate=global.fetch;
+ let currentStatus=404;const writes=[];
+ global.fetch=async(url,options)=>{
+  if(new URL(url).pathname==='/items/MLA1') return response({...item(),title:'Kit de embrague',attributes:[{id:'SELLER_SKU',value_name:'KE726033'}]});
+  if(new URL(url).pathname==='/items/MLA1/description') {
+   if(options.method==='POST'||options.method==='PUT'){writes.push(options.method);return response({plain_text:'Texto'});}
+   return response({plain_text:'Anterior'},currentStatus);
+  }
+  return delegate(url,options);
+ };
+ const change={action:'description',id:'MLA1',sku:'KE726033',description:'Texto'};
+ assert.equal((await management.managementChange(change)).status,200);
+ currentStatus=200;assert.equal((await management.managementChange(change)).status,200);
+ currentStatus=500;await assert.rejects(management.managementChange(change));
+ assert.deepEqual(writes,['POST','PUT']);
+});
+
 test('picture uploads validate type and register only images uploaded by this seller', async()=>{
  const delegate=global.fetch;let number=0,uploads=0,writes=[];
  global.fetch=async(url,options)=>{
