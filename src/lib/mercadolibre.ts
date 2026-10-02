@@ -48,6 +48,48 @@ export function adminAuthorized(candidate: string): boolean {
   return timingSafeEqual(a, b);
 }
 
+export async function createAdminSession(): Promise<string> {
+  const session = randomBytes(32).toString("base64url");
+  const key = createHash("sha256").update(session).digest("hex");
+  await redis("SET", PREFIX + "admin-session:" + key, seal({ purpose: "management", expiresAt: Date.now() + 60 * 60_000 }), "EX", 3600);
+  return session;
+}
+
+export async function validAdminSession(session?: string): Promise<boolean> {
+  if (!session || !/^[A-Za-z0-9_-]{43}$/.test(session)) return false;
+  try {
+    const key = createHash("sha256").update(session).digest("hex");
+    const raw = await redis<string | null>("GET", PREFIX + "admin-session:" + key);
+    if (!raw) return false;
+    const value = unseal<{ purpose: string; expiresAt: number }>(raw);
+    return value.purpose === "management" && value.expiresAt > Date.now();
+  } catch { return false; }
+}
+
+// This diagnostic performs only fixed GET requests. Never return credentials or
+// upstream response bodies: application metadata can contain client secrets.
+export async function managementDiagnostics() {
+  const seller = await connectedSellerId();
+  if (!seller) throw new IntegrationError("authorization");
+  const token = await accessToken();
+  const endpoints = [
+    ["Cuenta y publicaciones", `/users/${seller}/items/search?status=active&limit=1`],
+    ["Promociones", `/seller-promotions/users/${seller}?app_version=v2`],
+    ["Publicidad", "/advertising/advertisers?product_id=PADS"],
+  ];
+  const checks = await Promise.all(endpoints.map(async ([label, path]) => {
+    try {
+      const res = await fetch("https://api.mercadolibre.com" + path, {
+        method: "GET", cache: "no-store", headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(12_000),
+      });
+      await res.body?.cancel();
+      return { label, status: res.status, readable: res.ok };
+    } catch { return { label, status: 0, readable: false }; }
+  }));
+  const catalog = await readCatalog();
+  return { seller, checks, catalog };
+}
+
 // Only the server knows this key. Redis never stores readable OAuth tokens.
 export function seal(value: unknown): string {
   const iv = randomBytes(12);

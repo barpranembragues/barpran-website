@@ -72,6 +72,21 @@ beforeEach(() => {
 });
 afterEach(() => { global.fetch = originalFetch; });
 
+test('management sessions reject unknown or malformed credentials', async () => {
+  assert.equal(await ml.validAdminSession(), false);
+  assert.equal(await ml.validAdminSession('forged'), false);
+  assert.equal(await ml.validAdminSession('a'.repeat(43)), false);
+  const session = await ml.createAdminSession();
+  assert.equal(await ml.validAdminSession(session), true);
+  assert.equal(await ml.validAdminSession(session.slice(0, -1) + (session.endsWith('a') ? 'b' : 'a')), false);
+});
+
+test('rotating the admin secret revokes management sessions', async () => {
+  const session = await ml.createAdminSession();
+  process.env.ML_ADMIN_SECRET = 'a-different-test-only-secret-with-32-characters';
+  assert.equal(await ml.validAdminSession(session), false);
+});
+
 test('promotional price, SKU, original geometry image and trusted purchase link', () => {
   const product = ml.normalizeItem(item(), price, '123');
   assert.equal(product.price, 150); assert.equal(product.originalPrice, 200);
