@@ -1,4 +1,4 @@
-import { connectedSellerId, managementApi, managementWrite } from "./mercadolibre";
+import { connectedSellerId, managementApi, managementWrite, managementPicturesOwned } from "./mercadolibre";
 
 type Params = Record<string, string | number | boolean>;
 export type ManagementQuery = { resource: string; id?: string; params?: Params };
@@ -57,7 +57,7 @@ export async function managementQuery(input: ManagementQuery): Promise<{status:n
     const all = [...ids];
     for (let i=0; i<all.length; i+=8) {
       const batch = await Promise.all(all.slice(i,i+8).map(value=>ownedItem(value)));
-      items.push(...batch.map(item=>Object.fromEntries(["id", "title", "status", "sub_status", "price", "original_price", "available_quantity", "sold_quantity", "category_id", "listing_type_id", "seller_custom_field", "attributes", "sale_terms", "shipping", "tags", "catalog_listing", "user_product_id", "variations", "channels", "buying_mode", "condition", "permalink"].map(key=>[key,item[key]]))));
+      items.push(...batch.map(item=>Object.fromEntries(["id", "title", "status", "sub_status", "price", "original_price", "available_quantity", "sold_quantity", "category_id", "listing_type_id", "seller_custom_field", "attributes", "sale_terms", "shipping", "tags", "catalog_listing", "user_product_id", "variations", "channels", "buying_mode", "condition", "permalink", "pictures"].map(key=>[key,item[key]]))));
     }
     return { status: 200, data: { total: items.length, items } };
   }
@@ -95,7 +95,7 @@ export async function managementQuery(input: ManagementQuery): Promise<{status:n
 }
 
 
-type Change = { action:string; id:string; sku?:string; price?:number; quantity?:number; description?:string; expectedPrice?:number; budget?:number; status?:string; campaignId?:number; promotionId?:string; dealPrice?:number; itemId?:string; offerId?:string; title?:string; promotionType?:string };
+type Change = { action:string; id:string; sku?:string; price?:number; quantity?:number; description?:string; expectedPrice?:number; budget?:number; status?:string; campaignId?:number; promotionId?:string; dealPrice?:number; itemId?:string; offerId?:string; title?:string; promotionType?:string;pictureIds?:string[] };
 const targetSkus = ["KE701039","KE701414","KE726212","KE726211","KE728212","KE728224","KE728102"];
 async function advertiserIds() {
   const r = await managementApi("/advertising/advertisers?product_id=PADS","1");
@@ -110,10 +110,15 @@ async function campaignAdvertiser(id: string) {
   throw new Error("Campaña ajena");
 }
 export async function managementChange(c: Change) {
-  if (["item","description","promotion","smart","exclude_promotion","title","part_numbers"].includes(c.action)) {
+  if (["item","description","promotion","smart","exclude_promotion","title","part_numbers","pictures"].includes(c.action)) {
     const item = await ownedItem(c.id);
     const sku = (item.attributes as {id:string;value_name:string}[]).find(x=>x.id==="SELLER_SKU")?.value_name;
-    if (sku!==c.sku || (!["promotion","smart","exclude_promotion"].includes(c.action) && !targetSkus.includes(sku || ""))) throw new Error("SKU no autorizado");
+    const standardKit = /^KE\d{5,6}$/.test(sku || "") && /kit.*embrague|embrague.*kit|conjunto.*embrague/i.test(String(item.title));
+    if (sku!==c.sku || (!["promotion","smart","exclude_promotion"].includes(c.action) && !targetSkus.includes(sku || "") && !(standardKit && ["description","pictures"].includes(c.action)))) throw new Error("SKU no autorizado");
+    if(c.action==="pictures") {
+      if(!standardKit || !Array.isArray(c.pictureIds) || !await managementPicturesOwned(c.pictureIds)) throw new Error("Imágenes no autorizadas");
+      return managementWrite(`/items/${c.id}`,"PUT",{pictures:c.pictureIds.map(id=>({id}))});
+    }
     if (c.action==="item") {
       if (c.expectedPrice!==Number(item.price)) throw new Error("El precio cambió; consultar de nuevo");
       const body:Record<string,unknown>={};

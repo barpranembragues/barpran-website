@@ -13,7 +13,12 @@ export async function POST(request: NextRequest) {
     if(!Array.isArray(changes) || !changes.length || changes.length>10 || changes.some(c=>!c || typeof c.action!=="string" || typeof c.id!=="string")) throw new Error("Lote inválido");
     const results=[];
     for (const change of changes) {
-      try { results.push({id:change.id,action:change.action,...await managementChange(change)}); }
+      try {
+        const result=await managementChange(change);
+        const data=result.data as Record<string,unknown>;
+        const display=result.status<400 ? Object.fromEntries(["id","title","status","price","available_quantity","pictures","plain_text","budget","campaign_id"].filter(k=>k in data).map(k=>[k,data[k]])) : data;
+        results.push({id:change.id,action:change.action,status:result.status,data:display});
+      }
       catch { results.push({id:change.id,action:change.action,status:400,error:"Cambio rechazado por validación. Revisar datos y estado actual."}); break; }
       if (results.at(-1)!.status>=400) break;
     }

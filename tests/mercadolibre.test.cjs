@@ -283,3 +283,29 @@ test('promotion changes reject seller discounts greater than six percent', async
  global.fetch=async(url,options)=>new URL(url).pathname==='/seller-promotions/items/MLA1' ? response([{id:'P-MLA1',type:'DEAL',status:'candidate',original_price:200000,min_discounted_price:100000,max_discounted_price:190000}]) : delegate(url,options);
  await assert.rejects(management.managementChange({action:'promotion',id:'MLA1',sku:'KE701290',promotionId:'P-MLA1',dealPrice:180000}));
 });
+
+test('picture uploads validate type and register only images uploaded by this seller', async()=>{
+ const delegate=global.fetch;let number=0,uploads=0,writes=[];
+ global.fetch=async(url,options)=>{
+  const path=new URL(url).pathname;
+  if(path==='/pictures/items/upload'){
+   assert.equal(options.method,'POST');assert.ok(options.body instanceof FormData);uploads++;
+   return response({id:`${++number}-MLA123_102026`,variations:[]},201);
+  }
+  if(path==='/items/MLA1'){
+   if(options.method==='PUT'){writes.push(JSON.parse(options.body));return response({id:'MLA1'});}
+   return response({...item(),title:'Kit embrague Cilbrake',attributes:[{id:'SELLER_SKU',value_name:'KE701290'}]});
+  }
+  return delegate(url,options);
+ };
+ await assert.rejects(ml.managementUploadPicture(new File(['invalid'],'bad.png',{type:'image/png'})));
+ assert.equal(uploads,0);
+ const ids=[];
+ for(let i=0;i<4;i++)ids.push((await ml.managementUploadPicture(new File([new Uint8Array([137,80,78,71,13,10,26,10])],'foto.png',{type:'image/png'}))).data.id);
+ assert.equal(await ml.managementPicturesOwned(ids),true);
+ assert.equal(await ml.managementPicturesOwned([...ids.slice(0,3),'foreign-image']),false);
+ const management=require('../.testbuild/ml-management.js');
+ await assert.rejects(management.managementChange({action:'pictures',id:'MLA1',sku:'KE701290',pictureIds:['foreign','a','b','c']}));
+ assert.equal((await management.managementChange({action:'pictures',id:'MLA1',sku:'KE701290',pictureIds:ids})).status,200);
+ assert.deepEqual(writes,[{pictures:ids.map(id=>({id}))}]);
+});

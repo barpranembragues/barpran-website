@@ -3,6 +3,7 @@ import { cookies } from "next/headers";
 import { managementDiagnostics, validAdminSession } from "@/lib/mercadolibre";
 import Cambios from "./Cambios";
 import Consultas from "./Consultas";
+import Fotos from "./Fotos";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Administración privada de Mercado Libre", robots: { index: false, follow: false } };
@@ -39,9 +40,9 @@ export default async function ManagementPage({ searchParams }: { searchParams: P
         const matches = report.catalog.items.filter(item=>item.sku?.toUpperCase()===target);
         return <tr key={target}><td className="p-3">{target}</td><td className="p-3">{matches.length}</td><td className="p-3">{[...new Set(matches.map(item=>item.price))].map(price=>money.format(price)).join(" · ") || "Sin publicaciones activas"}</td></tr>;
       })}</tbody></table></div>
-      <p className="mt-6 text-ash">Precios, stock y campañas pendientes de modificación.</p>
+      <p className="mt-6 text-ash">Datos actuales consultados desde Mercado Libre. Verificá cada modificación con una nueva consulta.</p>
       <a href="/gestion-mercadolibre" className="mt-6 inline-block underline">Actualizar comprobación</a>
-      <Consultas /><Cambios />
+      <Fotos /><Consultas /><Cambios />
     </>}
   </div></main>;
 }

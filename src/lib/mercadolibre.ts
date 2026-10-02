@@ -346,6 +346,32 @@ export async function recordNotification(): Promise<void> {
 }
 
 
+export async function managementUploadPicture(file: File) {
+  const seller = await connectedSellerId();
+  if (!seller || file.size>4*1024*1024 || file.size<8 || !["image/png","image/jpeg"].includes(file.type)) throw new IntegrationError("authorization");
+  const bytes = new Uint8Array(await file.arrayBuffer());
+  const png = bytes[0]===137 && bytes[1]===80 && bytes[2]===78 && bytes[3]===71;
+  const jpeg = bytes[0]===255 && bytes[1]===216 && bytes[2]===255;
+  if ((file.type==="image/png" && !png) || (file.type==="image/jpeg" && !jpeg)) throw new IntegrationError("upstream");
+  const form = new FormData();form.append("file",file);
+  const response=await fetch("https://api.mercadolibre.com/pictures/items/upload",{method:"POST",headers:{Authorization:`Bearer ${await accessToken()}`},body:form,cache:"no-store",signal:AbortSignal.timeout(30000)});
+  const raw=await response.json().catch(()=>({})) as {id?:string;variations?:{size:string;secure_url:string}[];message?:string};
+  if(response.ok && raw.id && /^[A-Za-z0-9_-]{1,120}$/.test(raw.id)) {
+    await redis("SET",PREFIX+"uploaded-picture:"+raw.id,seal({seller}),"EX",30*24*3600);
+    return {status:response.status,data:{id:raw.id,variations:raw.variations}};
+  }
+  return {status:response.ok ? 502 : response.status,data:{message:raw.message || "No se pudo cargar la imagen"}};
+}
+export async function managementPicturesOwned(ids: string[]) {
+  const seller=await connectedSellerId();
+  if(!seller || ids.length!==4 || new Set(ids).size!==4) return false;
+  for(const id of ids) {
+    if(!/^[A-Za-z0-9_-]{1,120}$/.test(id)) return false;
+    const saved=await redis<string|null>("GET",PREFIX+"uploaded-picture:"+id);
+    if(!saved || unseal<{seller:string}>(saved).seller!==seller) return false;
+  }
+  return true;
+}
 export async function managementWrite(path: string, method: "PUT" | "POST" | "DELETE", body: Record<string, unknown>) {
   if (![/^\/items\/MLA\d+(?:\/description)?$/, /^\/seller-promotions\/items\/MLA\d+\?app_version=v2(?:&[A-Za-z0-9_=-]+)*$/, /^\/advertising\/MLA\/product_ads\/(?:campaigns|ad_groups)\/\d+$/].some(pattern=>pattern.test(path))) throw new IntegrationError("authorization");
   const token = await accessToken();
