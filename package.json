@@ -7,7 +7,8 @@
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
-    "lint": "next lint"
+    "lint": "next lint",
+    "test:mercadolibre": "tsc src/lib/mercadolibre.ts src/lib/mercadolibre-types.ts --outDir .testbuild --module commonjs --target es2022 --esModuleInterop --skipLibCheck && node --test tests/mercadolibre.test.cjs"
   },
   "dependencies": {
     "framer-motion": "^11.5.4",
