@@ -1,6 +1,7 @@
 import type { Metadata } from "next";
 import { cookies } from "next/headers";
 import { managementDiagnostics, validAdminSession } from "@/lib/mercadolibre";
+import Consultas from "./Consultas";
 
 export const dynamic = "force-dynamic";
 export const metadata: Metadata = { title: "Administración privada de Mercado Libre", robots: { index: false, follow: false } };
@@ -39,6 +40,7 @@ export default async function ManagementPage({ searchParams }: { searchParams: P
       })}</tbody></table></div>
       <p className="mt-6 text-ash">Precios, stock y campañas pendientes de modificación.</p>
       <a href="/gestion-mercadolibre" className="mt-6 inline-block underline">Actualizar comprobación</a>
+      <Consultas />
     </>}
   </div></main>;
 }

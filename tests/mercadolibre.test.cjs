@@ -246,3 +246,18 @@ test('stored tokens and manual seller settings must match the pinned seller', as
   process.env.ML_SELLER_ID = '123';
   await assert.rejects(ml.connectedSellerId(), err => err.kind === 'authorization');
 });
+
+
+test('private management rejects credential endpoints and foreign seller resources', async () => {
+  for (const path of ['/oauth/token', '/applications/456', '/users/999/items/search', '//evil.example/items/MLA1']) await assert.rejects(ml.managementApi(path));
+  assert.equal((await ml.managementApi('/items/MLA1')).status, 200);
+});
+
+test('private item reads check seller ownership before reading descriptions', async () => {
+  const management = require('../.testbuild/ml-management.js');
+  const delegate = global.fetch;
+  global.fetch = async (url, options) => new URL(url).pathname === '/items/MLA999' ? response({...item('MLA999'),seller_id:999}) : delegate(url,options);
+  await assert.rejects(management.managementQuery({resource:'description',id:'MLA999'}));
+  await assert.rejects(management.managementQuery({resource:'oauth'}));
+  await assert.rejects(management.managementQuery({resource:'item',id:'MLA1',params:{bad: {}}}));
+});

@@ -2,13 +2,13 @@
   "name": "barpran-website",
   "version": "1.0.0",
   "private": true,
-  "description": "Sitio corporativo de BARPRAN — El embrague del automovilismo.",
+  "description": "Sitio corporativo de BARPRAN \u2014 El embrague del automovilismo.",
   "scripts": {
     "dev": "next dev",
     "build": "next build",
     "start": "next start",
     "lint": "next lint",
-    "test:mercadolibre": "tsc src/lib/mercadolibre.ts src/lib/mercadolibre-types.ts --outDir .testbuild --module commonjs --target es2022 --esModuleInterop --skipLibCheck && node --test tests/mercadolibre.test.cjs"
+    "test:mercadolibre": "tsc src/lib/mercadolibre.ts src/lib/mercadolibre-types.ts src/lib/ml-management.ts --outDir .testbuild --module commonjs --target es2022 --esModuleInterop --skipLibCheck && node --test tests/mercadolibre.test.cjs"
   },
   "dependencies": {
     "framer-motion": "^11.5.4",

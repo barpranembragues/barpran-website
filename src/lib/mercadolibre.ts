@@ -211,6 +211,27 @@ async function api<T>(path: string, token: string, signal: AbortSignal): Promise
   return res.json() as Promise<T>;
 }
 
+// Server-only adapter used by the authenticated management interface. It never
+// exposes bearer credentials and cannot address OAuth, apps, or external URLs.
+export async function managementApi(path: string, version?: string): Promise<{ status: number; data: unknown }> {
+  const seller = await connectedSellerId();
+  const parsed = new URL(path, "https://api.mercadolibre.com");
+  if (!seller || parsed.origin !== "https://api.mercadolibre.com" || !path.startsWith("/") || path.startsWith("//") || ![
+    /^\/items\/MLA\d+(?:\/(?:description|prices|sale_price|compatibilities))?$/,
+    new RegExp(`^/users/${seller}/(?:items/search|shipping_options/free)$`),
+    /^\/sites\/MLA\/listing_prices$/,
+    new RegExp(`^/seller-promotions/users/${seller}$`),
+    /^\/seller-promotions\/(?:items\/MLA\d+|promotions\/[A-Za-z0-9_-]+(?:\/items)?)$/,
+    /^\/advertising\/advertisers$/,
+    /^\/advertising\/MLA\/advertisers\/\d+\/product_ads\/(?:campaigns\/search|ads\/search|ad_groups\/search)$/,
+    /^\/advertising\/MLA\/product_ads\/campaigns\/\d+(?:\/ads\/metrics)?$/,
+  ].some(pattern => pattern.test(parsed.pathname))) throw new IntegrationError("authorization");
+  const token = await accessToken();
+  const response = await fetch(parsed, { method: "GET", cache: "no-store", headers: { Authorization: `Bearer ${token}`, ...(version ? { "Api-Version": version } : {}) }, signal: AbortSignal.timeout(12_000) });
+  const data: unknown = await response.json().catch(() => ({ error: "Respuesta no disponible" }));
+  return { status: response.status, data };
+}
+
 export function normalizeItem(item: MeliItem, sale: SalePrice, sellerId: string): CatalogItem | null {
   if (String(item.seller_id) !== sellerId || item.status !== "active") return null;
   const link = new URL(item.permalink);
