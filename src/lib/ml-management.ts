@@ -95,7 +95,7 @@ export async function managementQuery(input: ManagementQuery): Promise<{status:n
 }
 
 
-type Change = { action:string; id:string; sku?:string; price?:number; quantity?:number; description?:string; expectedPrice?:number; budget?:number; status?:string; campaignId?:number; promotionId?:string; dealPrice?:number; itemId?:string };
+type Change = { action:string; id:string; sku?:string; price?:number; quantity?:number; description?:string; expectedPrice?:number; budget?:number; status?:string; campaignId?:number; promotionId?:string; dealPrice?:number; itemId?:string; offerId?:string; title?:string; promotionType?:string };
 const targetSkus = ["KE701039","KE701414","KE726212","KE726211","KE728212","KE728224","KE728102"];
 async function advertiserIds() {
   const r = await managementApi("/advertising/advertisers?product_id=PADS","1");
@@ -103,10 +103,10 @@ async function advertiserIds() {
   return ((r.data as {advertisers:{advertiser_id:number;site_id:string}[]}).advertisers || []).filter(x=>x.site_id==="MLA").map(x=>Number(x.advertiser_id));
 }
 export async function managementChange(c: Change) {
-  if (["item","description","promotion"].includes(c.action)) {
+  if (["item","description","promotion","smart","exclude_promotion","title"].includes(c.action)) {
     const item = await ownedItem(c.id);
     const sku = (item.attributes as {id:string;value_name:string}[]).find(x=>x.id==="SELLER_SKU")?.value_name;
-    if (sku!==c.sku || (c.action!=="promotion" && !targetSkus.includes(sku || ""))) throw new Error("SKU no autorizado");
+    if (sku!==c.sku || (!["promotion","smart","exclude_promotion"].includes(c.action) && !targetSkus.includes(sku || ""))) throw new Error("SKU no autorizado");
     if (c.action==="item") {
       if (c.expectedPrice!==Number(item.price)) throw new Error("El precio cambió; consultar de nuevo");
       const body:Record<string,unknown>={};
@@ -114,6 +114,23 @@ export async function managementChange(c: Change) {
       if (c.quantity!==undefined) { if (!Number.isInteger(c.quantity) || c.quantity<0 || c.quantity>20) throw new Error("Stock inválido"); body.available_quantity=c.quantity; }
       if (!Object.keys(body).length) throw new Error("Sin cambios");
       return managementWrite(`/items/${c.id}`,"PUT",body);
+    }
+    if (c.action==="title") {
+      if (!c.title || c.title.length>60 || c.title.length<10) throw new Error("Título inválido");
+      return managementWrite(`/items/${c.id}`,"PUT",{title:c.title});
+    }
+    if (["smart","exclude_promotion"].includes(c.action)) {
+      if (!c.promotionId || !/^P-MLA\d+$/.test(c.promotionId) || !c.offerId || !/^(?:OFFER|CANDIDATE)-MLA\d+-\d+$/.test(c.offerId)) throw new Error("Oferta inválida");
+      const r=await managementApi(`/seller-promotions/items/${c.id}?app_version=v2`);
+      const offer=(r.data as {id:string;ref_id:string;type:string;status:string;seller_percentage:number}[]).find(x=>x.id===c.promotionId && x.ref_id===c.offerId && x.type==="SMART");
+      if(r.status!==200 || !offer || !Number.isFinite(offer.seller_percentage)) throw new Error("Oferta no disponible");
+      if(c.action==="smart") {
+        const p=await managementApi(`/seller-promotions/promotions/${c.promotionId}?promotion_type=SMART&app_version=v2`);
+        if(p.status!==200 || (p.data as {status:string}).status!=="started" || offer.status!=="candidate" || offer.seller_percentage<0 || offer.seller_percentage>6) throw new Error("Oferta excedida o campaña no iniciada");
+        return managementWrite(`/seller-promotions/items/${c.id}?app_version=v2`,"POST",{promotion_id:c.promotionId,promotion_type:"SMART",offer_id:c.offerId});
+      }
+      if(offer.status!=="started" || offer.seller_percentage<=6) throw new Error("No es una oferta activa excedida");
+      return managementWrite(`/seller-promotions/items/${c.id}?app_version=v2&promotion_type=SMART&promotion_id=${c.promotionId}&offer_id=${c.offerId}`,"DELETE",{});
     }
     if (c.action==="description") {
       if (!c.description || c.description.length>20000) throw new Error("Descripción inválida");

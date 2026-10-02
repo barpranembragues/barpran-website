@@ -346,13 +346,13 @@ export async function recordNotification(): Promise<void> {
 }
 
 
-export async function managementWrite(path: string, method: "PUT" | "POST", body: Record<string, unknown>) {
-  if (![/^\/items\/MLA\d+(?:\/description)?$/, /^\/seller-promotions\/items\/MLA\d+\?app_version=v2$/, /^\/advertising\/MLA\/product_ads\/(?:campaigns|ad_groups)\/\d+$/].some(pattern=>pattern.test(path))) throw new IntegrationError("authorization");
+export async function managementWrite(path: string, method: "PUT" | "POST" | "DELETE", body: Record<string, unknown>) {
+  if (![/^\/items\/MLA\d+(?:\/description)?$/, /^\/seller-promotions\/items\/MLA\d+\?app_version=v2(?:&[A-Za-z0-9_=-]+)*$/, /^\/advertising\/MLA\/product_ads\/(?:campaigns|ad_groups)\/\d+$/].some(pattern=>pattern.test(path))) throw new IntegrationError("authorization");
   const token = await accessToken();
-  const before = await managementApi(path, path.startsWith("/advertising/") ? "2" : undefined);
+  const before = await managementApi(path.startsWith("/seller-promotions/") ? path.split("?")[0]+"?app_version=v2" : path, path.startsWith("/advertising/") ? "2" : undefined);
   if (before.status!==200) throw new IntegrationError("upstream");
   await redis("SET", `${PREFIX}change-backup:${Date.now()}:${randomBytes(8).toString("hex")}`, seal({path,method,body,before:before.data,date:new Date().toISOString()}), "EX", 30*24*3600);
-  const response = await fetch(`https://api.mercadolibre.com${path}`, {method,cache:"no-store",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json", ...(path.startsWith("/advertising/") ? {"Api-Version":"2"} : {})},body:JSON.stringify(body),signal:AbortSignal.timeout(12000)});
+  const response = await fetch(`https://api.mercadolibre.com${path}`, {method,cache:"no-store",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json", ...(path.startsWith("/advertising/") ? {"Api-Version":"2"} : {})},...(method!=="DELETE" ? {body:JSON.stringify(body)} : {}),signal:AbortSignal.timeout(12000)});
   const data: unknown = await response.json().catch(()=>({}));
   if (response.ok) await recordNotification();
   return {status:response.status,data};
