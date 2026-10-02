@@ -213,23 +213,25 @@ async function api<T>(path: string, token: string, signal: AbortSignal): Promise
 
 // Server-only adapter used by the authenticated management interface. It never
 // exposes bearer credentials and cannot address OAuth, apps, or external URLs.
-export async function managementApi(path: string, version?: string): Promise<{ status: number; data: unknown }> {
+export async function managementApi(path: string, version?: string): Promise<{ status: number; data: unknown; version?: string }> {
   const seller = await connectedSellerId();
   const parsed = new URL(path, "https://api.mercadolibre.com");
   if (!seller || parsed.origin !== "https://api.mercadolibre.com" || !path.startsWith("/") || path.startsWith("//") || ![
     /^\/items\/MLA\d+(?:\/(?:description|prices|sale_price|compatibilities))?$/,
     new RegExp(`^/users/${seller}/(?:items/search|shipping_options/free)$`),
+    /^\/user-products\/MLAU\d+(?:\/stock)?$/,
     /^\/sites\/MLA\/listing_prices$/,
     new RegExp(`^/seller-promotions/users/${seller}$`),
     /^\/seller-promotions\/(?:items\/MLA\d+|promotions\/[A-Za-z0-9_-]+(?:\/items)?)$/,
     /^\/advertising\/advertisers$/,
     /^\/advertising\/MLA\/advertisers\/\d+\/product_ads\/(?:campaigns\/search|ads\/search|ad_groups\/search)$/,
-    /^\/advertising\/MLA\/product_ads\/campaigns\/\d+(?:\/ads\/metrics)?$/,
+    /^\/advertising\/MLA\/product_ads\/campaigns\/\d+(?:\/ad_groups\/metrics)?$/,
+    /^\/advertising\/MLA\/product_ads\/ad_groups\/\d+(?:\/ads)?$/,
   ].some(pattern => pattern.test(parsed.pathname))) throw new IntegrationError("authorization");
   const token = await accessToken();
   const response = await fetch(parsed, { method: "GET", cache: "no-store", headers: { Authorization: `Bearer ${token}`, ...(version ? { "Api-Version": version } : {}) }, signal: AbortSignal.timeout(12_000) });
   const data: unknown = await response.json().catch(() => ({ error: "Respuesta no disponible" }));
-  return { status: response.status, data };
+  return { status: response.status, data, version: response.headers.get("x-version") || undefined };
 }
 
 export function normalizeItem(item: MeliItem, sale: SalePrice, sellerId: string): CatalogItem | null {
@@ -341,4 +343,17 @@ export async function recordNotification(): Promise<void> {
   // Notifications are hints, never trusted product data or arbitrary URLs to fetch.
   // Persist before acknowledging. New hints during a sync remain pending via revision.
   await redis("INCR", PREFIX + "revision");
+}
+
+
+export async function managementWrite(path: string, method: "PUT" | "POST", body: Record<string, unknown>) {
+  if (![/^\/items\/MLA\d+(?:\/description)?$/, /^\/seller-promotions\/items\/MLA\d+\?app_version=v2$/, /^\/advertising\/MLA\/product_ads\/(?:campaigns|ad_groups)\/\d+$/].some(pattern=>pattern.test(path))) throw new IntegrationError("authorization");
+  const token = await accessToken();
+  const before = await managementApi(path, path.startsWith("/advertising/") ? "2" : undefined);
+  if (before.status!==200) throw new IntegrationError("upstream");
+  await redis("SET", `${PREFIX}change-backup:${Date.now()}:${randomBytes(8).toString("hex")}`, seal({path,method,body,before:before.data,date:new Date().toISOString()}), "EX", 30*24*3600);
+  const response = await fetch(`https://api.mercadolibre.com${path}`, {method,cache:"no-store",headers:{Authorization:`Bearer ${token}`,"Content-Type":"application/json", ...(path.startsWith("/advertising/") ? {"Api-Version":"2"} : {})},body:JSON.stringify(body),signal:AbortSignal.timeout(12000)});
+  const data: unknown = await response.json().catch(()=>({}));
+  if (response.ok) await recordNotification();
+  return {status:response.status,data};
 }

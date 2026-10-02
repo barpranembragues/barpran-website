@@ -261,3 +261,25 @@ test('private item reads check seller ownership before reading descriptions', as
   await assert.rejects(management.managementQuery({resource:'oauth'}));
   await assert.rejects(management.managementQuery({resource:'item',id:'MLA1',params:{bad: {}}}));
 });
+
+test('item changes validate SKU and preserve pictures and sale terms in request', async () => {
+ const management=require('../.testbuild/ml-management.js');const delegate=global.fetch;let writes=[];
+ global.fetch=async(url,options)=>{
+  if(new URL(url).pathname==='/items/MLA1') {
+   if(options.method==='PUT') {writes.push(JSON.parse(options.body));return response({...item(),price:150000});}
+   return response({...item(),price:200000,attributes:[{id:'SELLER_SKU',value_name:'KE701039'}]});
+  }
+  return delegate(url,options);
+ };
+ await assert.rejects(management.managementChange({action:'item',id:'MLA1',sku:'KE728102',expectedPrice:200000,price:150000}));
+ await assert.rejects(management.managementChange({action:'item',id:'MLA1',sku:'KE701039',expectedPrice:100000,price:150000}));
+ assert.equal(writes.length,0);
+ assert.equal((await management.managementChange({action:'item',id:'MLA1',sku:'KE701039',expectedPrice:200000,price:150000,quantity:7})).status,200);
+ assert.deepEqual(writes,[{price:150000,available_quantity:7}]);
+});
+
+test('promotion changes reject seller discounts greater than six percent', async()=>{
+ const management=require('../.testbuild/ml-management.js');const delegate=global.fetch;
+ global.fetch=async(url,options)=>new URL(url).pathname==='/seller-promotions/items/MLA1' ? response([{id:'P-MLA1',type:'DEAL',status:'candidate',original_price:200000,min_discounted_price:100000,max_discounted_price:190000}]) : delegate(url,options);
+ await assert.rejects(management.managementChange({action:'promotion',id:'MLA1',sku:'KE701290',promotionId:'P-MLA1',dealPrice:180000}));
+});
