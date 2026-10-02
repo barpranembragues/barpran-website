@@ -87,6 +87,26 @@ test('rotating the admin secret revokes management sessions', async () => {
   assert.equal(await ml.validAdminSession(session), false);
 });
 
+test('management diagnostics use only GET and redact app secrets and other grants', async () => {
+  const delegate = global.fetch;
+  global.fetch = async (url, options) => {
+    const path = new URL(url).pathname;
+    if (['/applications/456', '/users/123/applications', '/advertising/advertisers', '/seller-promotions/users/123'].includes(path)) {
+      assert.ok(!options.method || options.method === 'GET');
+      if (path === '/advertising/advertisers') { assert.equal(options.headers['Api-Version'], '1'); return response({ advertisers: [] }); }
+      if (path === '/applications/456') return response({ scopes: ['urn:ml:mktp:publish-sync:/read-write', 'not-a-scope-secret'], client_secret: 'private-app-secret-do-not-return' });
+      if (path === '/users/123/applications') return response([{ app_id: 456, scopes: ['read', 'offline_access'] }, { app_id: 999, scopes: ['write'], secret: 'private-other-grant' }]);
+      return response({ error: 'unauthorized_scopes', sensitive: 'private-promotion-response' }, 403);
+    }
+    return delegate(url, options);
+  };
+  const report = await ml.managementDiagnostics();
+  assert.deepEqual(report.applicationScopes, ['urn:ml:mktp:publish-sync:/read-write']);
+  assert.deepEqual(report.grantedScopes, ['read', 'offline_access']);
+  assert.equal(report.checks.find(check => check.label === 'Promociones').status, 403);
+  assert.doesNotMatch(JSON.stringify(report), /private-|test-only-access|not-a-scope-secret/);
+});
+
 test('promotional price, SKU, original geometry image and trusted purchase link', () => {
   const product = ml.normalizeItem(item(), price, '123');
   assert.equal(product.price, 150); assert.equal(product.originalPrice, 200);

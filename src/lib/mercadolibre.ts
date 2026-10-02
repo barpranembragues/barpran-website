@@ -80,14 +80,29 @@ export async function managementDiagnostics() {
   const checks = await Promise.all(endpoints.map(async ([label, path]) => {
     try {
       const res = await fetch("https://api.mercadolibre.com" + path, {
-        method: "GET", cache: "no-store", headers: { Authorization: `Bearer ${token}` }, signal: AbortSignal.timeout(12_000),
+        method: "GET", cache: "no-store", headers: { Authorization: `Bearer ${token}`, ...(path.startsWith("/advertising/") ? { "Api-Version": "1" } : {}) }, signal: AbortSignal.timeout(12_000),
       });
       await res.body?.cancel();
       return { label, status: res.status, readable: res.ok };
     } catch { return { label, status: 0, readable: false }; }
   }));
+  let applicationScopes: string[] = [];
+  let grantedScopes: string[] = [];
+  const scopes = (value: unknown): string[] => {
+    const values = typeof value === "string" ? value.split(" ") : Array.isArray(value) ? value : [];
+    return values.filter((v): v is string => typeof v === "string" && /^(?:urn:[a-zA-Z0-9:_/.-]{1,180}|read|write|offline_access)$/.test(v));
+  };
+  try {
+    const app = await api<{ scopes?: unknown; scope?: unknown }>(`/applications/${env("ML_APP_ID")}`, token, AbortSignal.timeout(12_000));
+    applicationScopes = scopes(app.scopes ?? app.scope);
+  } catch { /* This metadata may require application-owner permissions. */ }
+  try {
+    const grants = await api<{ app_id?: number; id?: number; scopes?: unknown; scope?: unknown }[]>(`/users/${seller}/applications`, token, AbortSignal.timeout(12_000));
+    const grant = Array.isArray(grants) ? grants.find(g => String(g.app_id ?? g.id) === env("ML_APP_ID")) : null;
+    grantedScopes = scopes(grant?.scopes ?? grant?.scope);
+  } catch { /* Never expose complete grant or application responses. */ }
   const catalog = await readCatalog();
-  return { seller, checks, catalog };
+  return { seller, checks, applicationScopes, grantedScopes, catalog };
 }
 
 // Only the server knows this key. Redis never stores readable OAuth tokens.

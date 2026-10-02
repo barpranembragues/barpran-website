@@ -28,6 +28,10 @@ export default async function ManagementPage({ searchParams }: { searchParams: P
       <h2 className="mt-8 text-xl font-bold">Comprobación de acceso</h2>
       <ul className="mt-4 space-y-3">{report.checks.map(check => <li key={check.label}>{check.label}: {check.readable ? "Consulta habilitada" : "Consulta no habilitada"} (HTTP {check.status || "sin respuesta"})</li>)}</ul>
       <p className="mt-4 text-sm text-ash">Las consultas habilitadas confirman lectura. La capacidad de modificar requiere verificar los permisos y las respuestas de cada operación.</p>
+      <h2 className="mt-6 text-xl font-bold">Permisos de la aplicación</h2>
+      <p className="mt-2 break-all text-sm">{report.applicationScopes.join(" · ") || "Metadatos no disponibles"}</p>
+      <h2 className="mt-6 text-xl font-bold">Permisos autorizados por el vendedor</h2>
+      <p className="mt-2 break-all text-sm">{report.grantedScopes.join(" · ") || "Metadatos no disponibles"}</p>
       <h2 className="mt-8 text-xl font-bold">Publicaciones por SKU</h2>
       <div className="mt-4 overflow-x-auto"><table className="w-full text-left"><thead><tr>{["SKU", "Publicaciones activas", "Precios de venta actuales"].map(s=><th key={s} className="border-b border-white/20 p-3">{s}</th>)}</tr></thead><tbody>{targets.map(target=>{
         const matches = report.catalog.items.filter(item=>item.sku?.toUpperCase()===target);
