@@ -110,7 +110,7 @@ async function campaignAdvertiser(id: string) {
   throw new Error("Campaña ajena");
 }
 export async function managementChange(c: Change) {
-  if (["item","description","promotion","smart","exclude_promotion","title"].includes(c.action)) {
+  if (["item","description","promotion","smart","exclude_promotion","title","part_numbers"].includes(c.action)) {
     const item = await ownedItem(c.id);
     const sku = (item.attributes as {id:string;value_name:string}[]).find(x=>x.id==="SELLER_SKU")?.value_name;
     if (sku!==c.sku || (!["promotion","smart","exclude_promotion"].includes(c.action) && !targetSkus.includes(sku || ""))) throw new Error("SKU no autorizado");
@@ -124,7 +124,12 @@ export async function managementChange(c: Change) {
     }
     if (c.action==="title") {
       if (!c.title || c.title.length>60 || c.title.length<10) throw new Error("Título inválido");
-      return managementWrite(`/items/${c.id}`,"PUT",{title:c.title});
+      return managementWrite(`/items/${c.id}`,"PUT",item.user_product_id ? {family_name:c.title} : {title:c.title});
+    }
+    if (c.action==="part_numbers") {
+      const attributes = (item.attributes as {id:string;value_name:string}[]).filter(a=>["PART_NUMBER","OEM_PRODUCT_CODE"].includes(a.id) && /^KE\d+$/.test(a.value_name || "") && a.value_name!==sku).map(a=>({id:a.id,value_name:sku}));
+      if (!attributes.length) throw new Error("Sin códigos de kit inconsistentes");
+      return managementWrite(`/items/${c.id}`,"PUT",{attributes});
     }
     if (["smart","exclude_promotion"].includes(c.action)) {
       if (!c.promotionId || !/^P-MLA\d+$/.test(c.promotionId) || !c.offerId || !/^(?:OFFER|CANDIDATE)-MLA\d+-\d+$/.test(c.offerId)) throw new Error("Oferta inválida");
