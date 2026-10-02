@@ -102,6 +102,13 @@ async function advertiserIds() {
   if (r.status!==200) throw new Error("Anunciante no disponible");
   return ((r.data as {advertisers:{advertiser_id:number;site_id:string}[]}).advertisers || []).filter(x=>x.site_id==="MLA").map(x=>Number(x.advertiser_id));
 }
+async function campaignAdvertiser(id: string) {
+  for (const advertiser of await advertiserIds()) {
+    const response = await managementApi(`/advertising/MLA/advertisers/${advertiser}/product_ads/campaigns/search?limit=100`,"2");
+    if (response.status===200 && (response.data as {results:{id:number}[]}).results?.some(c=>String(c.id)===id)) return advertiser;
+  }
+  throw new Error("Campaña ajena");
+}
 export async function managementChange(c: Change) {
   if (["item","description","promotion","smart","exclude_promotion","title"].includes(c.action)) {
     const item = await ownedItem(c.id);
@@ -145,8 +152,9 @@ export async function managementChange(c: Change) {
   if (c.action==="campaign") {
     if (!/^\d+$/.test(c.id)) throw new Error("Campaña inválida");
     const r = await managementApi(`/advertising/MLA/product_ads/campaigns/${c.id}`,"2");
-    const campaign = r.data as {advertiser_id:number;currency_id:string};
-    if (r.status!==200 || ! (await advertiserIds()).includes(campaign.advertiser_id) || campaign.currency_id!=="ARS") throw new Error("Campaña ajena");
+    const campaign = r.data as {currency_id:string};
+    if (r.status!==200 || campaign.currency_id!=="ARS") throw new Error("Campaña ajena");
+    await campaignAdvertiser(c.id);
     const body:Record<string,unknown>={};
     if (c.budget!==undefined) { if (!Number.isFinite(c.budget) || c.budget<0 || c.budget>5331) throw new Error("Presupuesto excedido"); body.budget=c.budget; }
     if (c.status!==undefined) { if (!["active","paused"].includes(c.status)) throw new Error("Estado inválido");body.status=c.status; }
@@ -164,8 +172,7 @@ export async function managementChange(c: Change) {
       const group = r.data as {advertiser_id:number};
       const mapping = await managementApi(`/advertising/MLA/advertisers/${group.advertiser_id}/product_ads/ad_groups/search?${query({"filters[item_ids]":String(c.itemId)})}`,"2");
       if (mapping.status!==200 || !(mapping.data as {results:{id:number}[]}).results?.some(x=>String(x.id)===c.id)) throw new Error("El grupo no corresponde al producto");
-      const campaign=await managementApi(`/advertising/MLA/product_ads/campaigns/${c.campaignId}`,"2");
-      if(campaign.status!==200 || Number((campaign.data as {advertiser_id:number}).advertiser_id)!==group.advertiser_id) throw new Error("Campaña ajena");
+      if(await campaignAdvertiser(String(c.campaignId))!==group.advertiser_id) throw new Error("Campaña ajena");
     }
     return managementWrite(`/advertising/MLA/product_ads/ad_groups/${c.id}`,"PUT",{status:c.status,...(Number.isInteger(c.campaignId) && Number(c.campaignId)>0 ? {campaign_id:c.campaignId} : {})});
   }
