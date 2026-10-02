@@ -29,9 +29,9 @@ function env(name: string): string {
 }
 
 export function integrationConfigured(): boolean {
-  return ["ML_APP_ID", "ML_APP_SECRET", "ML_ADMIN_SECRET", "ML_SELLER_ID", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"]
+  return ["ML_APP_ID", "ML_APP_SECRET", "ML_ADMIN_SECRET", "UPSTASH_REDIS_REST_URL", "UPSTASH_REDIS_REST_TOKEN"]
     .every((name) => Boolean(process.env[name])) && (process.env.ML_ADMIN_SECRET?.length ?? 0) >= 32
-    && /^\d+$/.test(process.env.ML_SELLER_ID || "") && /^\d+$/.test(process.env.ML_APP_ID || "");
+    && (!process.env.ML_SELLER_ID || /^\d+$/.test(process.env.ML_SELLER_ID)) && /^\d+$/.test(process.env.ML_APP_ID || "");
 }
 
 export function origin(): string {
@@ -106,14 +106,28 @@ async function tokenRequest(fields: Record<string, string>): Promise<Tokens> {
   });
   if (!res.ok) throw new IntegrationError(res.status === 400 || res.status === 401 ? "authorization" : "upstream");
   const body = await res.json();
-  if (!body.access_token || !body.refresh_token || !Number.isFinite(body.expires_in) || String(body.user_id) !== env("ML_SELLER_ID")) throw new IntegrationError("authorization");
+  const expected = await connectedSellerId();
+  if (!body.access_token || !body.refresh_token || !Number.isFinite(body.expires_in) || !Number.isSafeInteger(body.user_id) || body.user_id <= 0 || (expected && String(body.user_id) !== expected)) throw new IntegrationError("authorization");
   return { access_token: body.access_token, refresh_token: body.refresh_token, user_id: body.user_id, expiresAt: Date.now() + body.expires_in * 1000 };
+}
+
+// An optional configured ID takes precedence; otherwise the first administrator-
+// initiated OAuth connection pins the seller permanently in durable storage.
+export async function connectedSellerId(): Promise<string | null> {
+  const configured = process.env.ML_SELLER_ID;
+  const pinned = await getStored<string>("seller");
+  if (configured && pinned && configured !== pinned) throw new IntegrationError("authorization");
+  const seller = configured || pinned;
+  if (seller && !/^\d+$/.test(seller)) throw new IntegrationError("authorization");
+  return seller || null;
 }
 
 async function getTokens(): Promise<Tokens> {
   const raw = await redis<string | null>("GET", PREFIX + "tokens");
   if (!raw) throw new IntegrationError("authorization");
-  return unseal<Tokens>(raw);
+  const tokens = unseal<Tokens>(raw);
+  if (String(tokens.user_id) !== await connectedSellerId()) throw new IntegrationError("authorization");
+  return tokens;
 }
 
 async function accessToken(): Promise<string> {
@@ -162,7 +176,8 @@ export function normalizeItem(item: MeliItem, sale: SalePrice, sellerId: string)
 }
 
 async function collectItems(token: string, signal: AbortSignal): Promise<CatalogItem[]> {
-  const seller = env("ML_SELLER_ID");
+  const seller = await connectedSellerId();
+  if (!seller) throw new IntegrationError("authorization");
   const ids = new Set<string>();
   let scroll: string | undefined;
   do {
@@ -231,13 +246,15 @@ export async function finishAuthorization(code: string, state: string): Promise<
   if (!owner) throw new IntegrationError("busy");
   try {
     const tokens = await tokenRequest({ grant_type: "authorization_code", code, redirect_uri: origin() + "/api/mercadolibre/callback" });
+    await redis("SET", PREFIX + "seller", JSON.stringify(String(tokens.user_id)), "NX");
+    if (String(tokens.user_id) !== await connectedSellerId()) throw new IntegrationError("authorization");
     await commitUnderLock("token-lock", owner, "tokens", seal(tokens));
     await redis("INCR", PREFIX + "revision");
   } finally { await unlock("token-lock", owner); }
 }
 
-export function validNotification(body: Record<string, unknown>): boolean {
-  return String(body.user_id) === process.env.ML_SELLER_ID && String(body.application_id) === process.env.ML_APP_ID
+export function validNotification(body: Record<string, unknown>, sellerId: string | null = process.env.ML_SELLER_ID || null): boolean {
+  return Boolean(sellerId) && String(body.user_id) === sellerId && String(body.application_id) === process.env.ML_APP_ID
     && ["items", "items_prices"].includes(String(body.topic))
     && typeof body.resource === "string" && /^\/items\/MLA\d+(?:\/prices)?$/.test(body.resource);
 }

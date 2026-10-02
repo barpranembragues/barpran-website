@@ -1,5 +1,5 @@
 import { NextRequest, NextResponse } from "next/server";
-import { integrationConfigured, recordNotification, validNotification } from "@/lib/mercadolibre";
+import { connectedSellerId, integrationConfigured, recordNotification, validNotification } from "@/lib/mercadolibre";
 
 export const runtime = "nodejs";
 
@@ -11,7 +11,7 @@ export async function POST(request: NextRequest) {
     if (text.length > 16_384) return new NextResponse(null, { status: 413 });
     let body: unknown;
     try { body = JSON.parse(text); } catch { return new NextResponse(null, { status: 400 }); }
-    if (!body || typeof body !== "object" || !validNotification(body as Record<string, unknown>)) {
+    if (!body || typeof body !== "object" || !validNotification(body as Record<string, unknown>, await connectedSellerId())) {
       return new NextResponse(null, { status: 200 });
     }
     await recordNotification();

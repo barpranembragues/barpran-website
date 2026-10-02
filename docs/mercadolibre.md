@@ -12,7 +12,7 @@ Funciona con el servidor Next.js existente, tanto en Netlify como en Vercel. No 
 | --- | --- |
 | `ML_APP_ID` | ID de la aplicación de Mercado Libre |
 | `ML_APP_SECRET` | Secreto de esa aplicación |
-| `ML_SELLER_ID` | ID numérico del vendedor BARPRAN; bloquea la conexión de otra cuenta |
+| `ML_SELLER_ID` | Opcional: ID numérico del vendedor. Si se omite, la primera autorización iniciada por el administrador vincula la cuenta de manera persistente y bloquea conectar otra |
 | `ML_SITE_ORIGIN` | `https://barpran.com.ar`, dominio canónico observado en producción |
 | `ML_ADMIN_SECRET` | Clave aleatoria privada de al menos 32 caracteres para conectar la cuenta y cifrar los tokens |
 | `UPSTASH_REDIS_REST_URL` | URL HTTPS de una base Redis REST privada |
@@ -29,7 +29,7 @@ Crear o reutilizar una aplicación de BARPRAN con acceso de lectura a publicacio
 - Tópicos: `items` e `items_prices`. Seleccionar los equivalentes en DevCenter si su UI organiza permisos por entidades.
 - Publicar el código y variables en el entorno de producción.
 - Abrir `/tienda/conectar-mercadolibre` en el dominio canónico; ingresar la clave privada de la integración. La contraseña de Mercado Libre se ingresa solamente en Mercado Libre.
-- Autorizar el vendedor cuyo ID coincide con `ML_SELLER_ID`.
+- Autorizar la cuenta de vendedor de BARPRAN. Su ID queda vinculado en Redis en la primera conexión; las reconexiones, renovaciones y notificaciones deben coincidir con esa cuenta. Si se configura `ML_SELLER_ID`, también debe coincidir. No se admite cambiar de vendedor desde el panel de conexión.
 - Abrir `/tienda` y verificar el total de publicaciones activas con la cuenta de vendedor.
 
 Los permisos concretos ofrecidos por DevCenter deben revisarse antes de aceptar; usar los mínimos disponibles. No entregar contraseñas, códigos OAuth ni secretos por chat.

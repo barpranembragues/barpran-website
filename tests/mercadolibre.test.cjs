@@ -174,3 +174,40 @@ test('OAuth authorization is bound to one-use state and configured seller', asyn
   await assert.rejects(ml.finishAuthorization('test-only-code', other.state));
   assert.equal(ml.unseal(data.get(PREFIX + 'tokens')).user_id, 123);
 });
+
+test('first administrator OAuth connection pins the seller without a manual ID', async () => {
+  delete process.env.ML_SELLER_ID;
+  data.delete(PREFIX + 'tokens');
+  assert.equal(ml.integrationConfigured(), true);
+  assert.equal(await ml.connectedSellerId(), null);
+  const auth = await ml.createAuthorization();
+  await ml.finishAuthorization('test-only-code', auth.state);
+  assert.equal(await ml.connectedSellerId(), '123');
+  assert.equal((await ml.readCatalog()).items.length, 1);
+  const seller = await ml.connectedSellerId();
+  assert.equal(ml.validNotification({ application_id: 456, user_id: 123, topic: 'items', resource: '/items/MLA1' }, seller), true);
+  assert.equal(ml.validNotification({ application_id: 456, user_id: 999, topic: 'items', resource: '/items/MLA1' }, seller), false);
+});
+
+test('a subsequent OAuth connection cannot replace the pinned account', async () => {
+  delete process.env.ML_SELLER_ID;
+  data.set(PREFIX + 'seller', JSON.stringify('123'));
+  const old = data.get(PREFIX + 'tokens');
+  const fetchBefore = global.fetch;
+  global.fetch = async (url, options) => new URL(url).pathname === '/oauth/token'
+    ? response({ access_token: 'test-only-other-access', refresh_token: 'test-only-other-refresh', expires_in: 21600, user_id: 999 })
+    : fetchBefore(url, options);
+  const auth = await ml.createAuthorization();
+  await assert.rejects(ml.finishAuthorization('test-only-code', auth.state), err => err.kind === 'authorization');
+  assert.equal(await ml.connectedSellerId(), '123');
+  assert.equal(data.get(PREFIX + 'tokens'), old);
+});
+
+test('stored tokens and manual seller settings must match the pinned seller', async () => {
+  delete process.env.ML_SELLER_ID;
+  data.set(PREFIX + 'seller', JSON.stringify('999'));
+  await assert.rejects(ml.readCatalog(), err => err.kind === 'authorization');
+  assert.equal(reads, 0);
+  process.env.ML_SELLER_ID = '123';
+  await assert.rejects(ml.connectedSellerId(), err => err.kind === 'authorization');
+});
