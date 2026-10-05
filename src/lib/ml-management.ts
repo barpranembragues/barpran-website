@@ -139,7 +139,12 @@ export async function managementChange(c: Change) {
     if (["smart","exclude_promotion"].includes(c.action)) {
       if (!c.promotionId || !/^P-MLA\d+$/.test(c.promotionId) || !c.offerId || !/^(?:OFFER|CANDIDATE)-MLA\d+-\d+$/.test(c.offerId)) throw new Error("Oferta inválida");
       const r=await managementApi(`/seller-promotions/items/${c.id}?app_version=v2`);
-      const offer=(r.data as {id:string;ref_id:string;type:string;status:string;seller_percentage:number}[]).find(x=>x.id===c.promotionId && x.ref_id===c.offerId && x.type==="SMART");
+      let offer=(r.data as {id:string;ref_id:string;type:string;status:string;seller_percentage:number}[]).find(x=>x.id===c.promotionId && x.ref_id===c.offerId && x.type==="SMART");
+      if (r.status===200 && !offer && c.action==="smart") {
+        const candidates=await managementApi(`/seller-promotions/promotions/${c.promotionId}/items?${query({app_version:"v2",promotion_type:"SMART",status:"candidate",item_id:c.id,limit:50})}`);
+        const candidate=(candidates.data as {results?:{id:string;offer_id:string;status:string;seller_percentage:number}[]})?.results?.find(x=>x.id===c.id && x.offer_id===c.offerId && x.status==="candidate");
+        if(candidates.status===200 && candidate) offer={...candidate,id:c.promotionId,ref_id:candidate.offer_id,type:"SMART"};
+      }
       if(r.status!==200 || !offer || !Number.isFinite(offer.seller_percentage)) throw new Error("Oferta no disponible");
       if(c.action==="smart") {
         const p=await managementApi(`/seller-promotions/promotions/${c.promotionId}?promotion_type=SMART&app_version=v2`);

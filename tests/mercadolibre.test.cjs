@@ -284,6 +284,32 @@ test('promotion changes reject seller discounts greater than six percent', async
  await assert.rejects(management.managementChange({action:'promotion',id:'MLA1',sku:'KE701290',promotionId:'P-MLA1',dealPrice:180000}));
 });
 
+test('SMART candidates may be verified by campaign with exact item and offer matching and the same discount limit', async()=>{
+ const management=require('../.testbuild/ml-management.js');const delegate=global.fetch;const writes=[];
+ let sellerPercentage=4;let candidateId='MLA1';let readStatus=200;
+ global.fetch=async(url,options)=>{
+  const path=new URL(url).pathname;
+  if(path==='/seller-promotions/items/MLA1') {
+   if(options.method==='POST'){writes.push(JSON.parse(options.body));return response({price:150000},201);}
+   return response([],readStatus);
+  }
+  if(path==='/seller-promotions/promotions/P-MLA1/items') {
+   assert.equal(new URL(url).searchParams.get('item_id'),'MLA1');
+   return response({results:[{id:candidateId,offer_id:'CANDIDATE-MLA1-123',status:'candidate',seller_percentage:sellerPercentage}]});
+  }
+  if(path==='/seller-promotions/promotions/P-MLA1') return response({status:'started'});
+  return delegate(url,options);
+ };
+ const change={action:'smart',id:'MLA1',sku:'KE701290',promotionId:'P-MLA1',offerId:'CANDIDATE-MLA1-123'};
+ sellerPercentage=7;await assert.rejects(management.managementChange(change));sellerPercentage=4;
+ candidateId='MLA999';await assert.rejects(management.managementChange(change));candidateId='MLA1';
+ await assert.rejects(management.managementChange({...change,offerId:'CANDIDATE-MLA1-456'}));
+ readStatus=500;await assert.rejects(management.managementChange(change));readStatus=200;
+ assert.equal(writes.length,0);
+ assert.equal((await management.managementChange(change)).status,201);
+ assert.deepEqual(writes,[{promotion_id:'P-MLA1',promotion_type:'SMART',offer_id:'CANDIDATE-MLA1-123'}]);
+});
+
 test('descriptions use POST only when absent and reject failed reads before writing', async()=>{
  const management=require('../.testbuild/ml-management.js');const delegate=global.fetch;
  let currentStatus=404;const writes=[];
