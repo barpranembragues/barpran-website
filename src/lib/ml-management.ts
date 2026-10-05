@@ -114,7 +114,7 @@ export async function managementChange(c: Change) {
     const item = await ownedItem(c.id);
     const sku = (item.attributes as {id:string;value_name:string}[]).find(x=>x.id==="SELLER_SKU")?.value_name;
     const standardKit = /^KE\d{5,6}$/.test(sku || "") && /kit.*embrague|embrague.*kit|conjunto.*embrague/i.test(String(item.title));
-    if (sku!==c.sku || (!["promotion","smart","exclude_promotion"].includes(c.action) && !targetSkus.includes(sku || "") && !(standardKit && ["description","pictures"].includes(c.action)))) throw new Error("SKU no autorizado");
+    if (sku!==c.sku || (!["promotion","smart","exclude_promotion"].includes(c.action) && !targetSkus.includes(sku || "") && !(standardKit && ["description","pictures","part_numbers"].includes(c.action)))) throw new Error("SKU no autorizado");
     if(c.action==="pictures") {
       if(!standardKit || !Array.isArray(c.pictureIds) || !await managementPicturesOwned(c.pictureIds)) throw new Error("Imágenes no autorizadas");
       return managementWrite(`/items/${c.id}`,"PUT",{pictures:c.pictureIds.map(id=>({id}))});

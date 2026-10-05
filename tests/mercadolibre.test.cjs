@@ -302,6 +302,31 @@ test('descriptions use POST only when absent and reject failed reads before writ
  assert.deepEqual(writes,['POST','PUT']);
 });
 
+test('standard kit part numbers correct copied kit codes without rewriting OEM or sale conditions', async()=>{
+ const management=require('../.testbuild/ml-management.js');const delegate=global.fetch;const writes=[];
+ let title='Kit embrague Cilbrake';let seller=123;
+ const product=()=>({...item(),seller_id:seller,title,attributes:[
+  {id:'SELLER_SKU',value_name:'KE750874'},
+  {id:'PART_NUMBER',value_name:'KE726211'},
+  {id:'OEM',value_name:'KE726211'},
+  {id:'OEM_PRODUCT_CODE',value_name:'7701476934'},
+  {id:'DISC_DIAMETER',value_name:'200 mm'}]});
+ global.fetch=async(url,options)=>{
+  if(new URL(url).pathname==='/items/MLA1') {
+   if(options.method==='PUT'){writes.push(JSON.parse(options.body));return response(product());}
+   return response(product());
+  }
+  return delegate(url,options);
+ };
+ const change={action:'part_numbers',id:'MLA1',sku:'KE750874'};
+ await assert.rejects(management.managementChange({...change,sku:'KE726211'}));
+ seller=999;await assert.rejects(management.managementChange(change));seller=123;
+ title='Pastillas de freno';await assert.rejects(management.managementChange(change));title='Kit embrague Cilbrake';
+ assert.equal(writes.length,0);
+ assert.equal((await management.managementChange(change)).status,200);
+ assert.deepEqual(writes,[{attributes:[{id:'PART_NUMBER',value_name:'KE750874'}]}]);
+});
+
 test('picture uploads validate type and register only images uploaded by this seller', async()=>{
  const delegate=global.fetch;let number=0,uploads=0,writes=[];
  global.fetch=async(url,options)=>{
