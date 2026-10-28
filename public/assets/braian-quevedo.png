@@ -1,0 +1,13 @@
+
+  <svg xmlns="http://www.w3.org/2000/svg" width="720" height="900" viewBox="0 0 720 900">
+    <defs>
+      <linearGradient id="g" x1="0" y1="0" x2="1" y2="1">
+        <stop offset="0" stop-color="#111111"/>
+        <stop offset="1" stop-color="#262626"/>
+      </linearGradient>
+    </defs>
+    <rect width="720" height="900" fill="url(#g)"/>
+    <path d="M0 760 L720 520 L720 900 L0 900 Z" fill="#e31b23" opacity=".16"/>
+    <text x="50%" y="46%" dominant-baseline="middle" text-anchor="middle" fill="#f1eee7" font-family="Arial, sans-serif" font-size="150" font-weight="800">BQ</text>
+    <text x="50%" y="59%" dominant-baseline="middle" text-anchor="middle" fill="#9a9a9a" font-family="monospace" font-size="25" letter-spacing="5">BARPRAN MOTORSPORT</text>
+  </svg>

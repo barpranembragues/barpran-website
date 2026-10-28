@@ -1,0 +1,7 @@
+import html from "@/lib/approved-home";
+
+export const dynamic = "force-static";
+
+export function GET() {
+  return new Response(html, { headers: { "Content-Type": "text/html; charset=utf-8" } });
+}
