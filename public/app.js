@@ -24,3 +24,20 @@ document.querySelector('#quote-form').addEventListener('submit',event=>{
  window.open('https://wa.me/5491170586143?text='+encodeURIComponent(buildQuoteMessage(new FormData(form))),'_blank','noopener,noreferrer');
 });
 document.querySelector('#quote-form').addEventListener('input',event=>event.target.setCustomValidity?.(''));
+
+
+// Al abrir la página principal sin un enlace a sección, empezar siempre
+// en la fachada del local. Los enlaces con #contacto, #tienda, etc.
+// siguen llevando a su destino normalmente.
+if (!window.location.hash) {
+  if ('scrollRestoration' in window.history) {
+    window.history.scrollRestoration = 'manual';
+  }
+  const showFront = () => window.scrollTo({ top: 0, left: 0, behavior: 'instant' });
+  window.addEventListener('pageshow', showFront);
+  if (document.readyState === 'loading') {
+    document.addEventListener('DOMContentLoaded', showFront, { once: true });
+  } else {
+    showFront();
+  }
+}
