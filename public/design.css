@@ -48,3 +48,33 @@ footer.ftr .ftr-legal{max-width:70ch}
 #tienda .kit-photo{display:block;aspect-ratio:4/3;height:auto;padding:0;overflow:hidden}
 #tienda .kit-photo img.kit-image{position:absolute;inset:0;width:100%;height:100%;object-fit:cover;object-position:50% 50%;max-width:none}
 #tienda .kit-photo img[src*="5-pastillas"]{object-position:50% 58%}
+
+
+/* BARPRAN · corrección responsive 2026-11-06.
+   Solo pantallas móviles; la composición de escritorio se mantiene intacta. */
+@media (max-width: 760px) {
+  .new-header > .wrap { min-width: 0; gap: 12px; }
+  .new-header .logo-window { max-width: calc(100vw - 125px); }
+  main, main > section, main .wrap, main .frame { min-width: 0; max-width: 100%; }
+  main .grid > *, main .flex > *, main article { min-width: 0; }
+  main h1, main h2, main h3, main p { overflow-wrap: break-word; }
+  main .btn, main button, main a.btn { max-width: 100%; white-space: normal; }
+  #tienda .grid { grid-template-columns: minmax(0, 1fr); }
+  #tienda article { width: 100%; min-width: 0; }
+  #tienda .kit-photo {
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 4 / 3;
+    height: auto;
+    overflow: hidden;
+  }
+  #tienda .kit-photo img.kit-image {
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    object-fit: contain;
+    object-position: center;
+  }
+  #productos .grid { min-width: 0; }
+  #productos img { max-width: 100%; }
+}
