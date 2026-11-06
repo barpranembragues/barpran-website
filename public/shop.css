@@ -11,3 +11,35 @@ main>section#pago-online.payment-section{background:#141212!important;color:#f4f
 main>section#catalogo.catalog-section{background:#f1ede8!important;color:#1a1616!important}
 main>section.shop-hero:not(.hero):not(.online){background:#141212!important;color:#f4f0eb!important;padding-top:170px!important}
 .payment-form,.payment-form label,.payment-form legend,.payment-form p,.payment-form>a{color:#f4f0eb!important}
+
+
+/* BARPRAN · catálogo Mercado Libre adaptado a pantallas pequeñas. */
+@media (max-width: 760px) {
+  .catalog-section .wrap, .payment-section .wrap,
+  .shop-hero .wrap { width: 100%; min-width: 0; max-width: 100%; }
+  .catalog-grid { grid-template-columns: minmax(0, 1fr); }
+  .catalog-card, .catalog-body, .catalog-controls > *,
+  .payment-layout > *, .payment-form { min-width: 0; max-width: 100%; }
+  .catalog-photo {
+    width: 100%;
+    max-width: 100%;
+    aspect-ratio: 1 / 1;
+    height: auto;
+    padding: 16px;
+    overflow: hidden;
+  }
+  .catalog-photo img {
+    display: block;
+    width: 100%;
+    height: 100%;
+    max-width: 100%;
+    max-height: 100%;
+    object-fit: contain;
+    object-position: center;
+  }
+  .catalog-body h3 { overflow-wrap: anywhere; }
+  .catalog-body .btn { max-width: 100%; white-space: normal; }
+  .catalog-heading a { overflow-wrap: anywhere; }
+  .payment-options { grid-template-columns: repeat(3, minmax(0, 1fr)); }
+  .payment-options label { min-width: 0; padding-inline: 5px; }
+}
