@@ -68,6 +68,13 @@ function checkoutError(request: NextRequest, code: string) {
 }
 
 export async function POST(request: NextRequest) {
+  // PAUSA DE EMERGENCIA (12/11/2026): no iniciar ningún checkout de Payway.
+  // Mantener el bloqueo servidor incluso ante POST directos o automatizados.
+  return new NextResponse(
+    '<!doctype html><html lang="es"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Pagos temporalmente suspendidos · BARPRAN</title></head><body style="font-family:Arial,sans-serif;max-width:620px;margin:12vh auto;padding:24px;color:#222"><h1>Pagos online temporalmente suspendidos</h1><p>Por mantenimiento de seguridad, el pago con tarjeta desde nuestra web no está disponible por el momento.</p><p>Para continuar con tu compra, contactanos por <a href="https://wa.me/5491170586143">WhatsApp</a>.</p><p>BARPRAN · Balcarce 84, Ramos Mejía.</p></body></html>',
+    { status: 503, headers: { "Content-Type": "text/html; charset=utf-8", "Cache-Control": "no-store", "Retry-After": "3600", "X-Barpran-Payment-Status": "paused" } }
+  );
+
   const formData = await request.formData();
 
   const montoRaw = clean(formData.get("monto") ?? formData.get("amount"));
