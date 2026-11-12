@@ -144,6 +144,20 @@ function checkoutError(request: NextRequest, code: string) {
   return NextResponse.redirect(url, 303);
 }
 
+
+// Comprobación segura sin datos de tarjetas ni llamada a Payway.
+// Permite verificar el estado del bloqueo mediante una solicitud GET.
+export async function GET() {
+  const paused = process.env.PAYWAY_CHECKOUT_ENABLED !== "true";
+  return NextResponse.json(
+    { checkout: paused ? "paused" : "configured_for_verification" },
+    {
+      status: 200,
+      headers: { "Cache-Control": "no-store, max-age=0", "X-Robots-Tag": "noindex" },
+    }
+  );
+}
+
 export async function POST(request: NextRequest) {
   // Kill switch: nunca habilitar en producción sin validar todo el circuito.
   if (process.env.PAYWAY_CHECKOUT_ENABLED !== "true") return pause();
