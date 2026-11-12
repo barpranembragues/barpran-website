@@ -47,7 +47,7 @@ async function checkRateLimit(request: NextRequest): Promise<boolean> {
   const bucket = Math.floor(Date.now() / 600000);
   const key = `barpran:payway:attempts:${fingerprint}:${bucket}`;
   try {
-    const response = await fetch(`${url.replace(/\\/$/, "")}/multi-exec`, {
+    const response = await fetch(`${url.replace(/[/]$/, "")}/multi-exec`, {
       method: "POST",
       headers: { Authorization: `Bearer ${token}`, "Content-Type": "application/json" },
       body: JSON.stringify([["INCR", key], ["EXPIRE", key, "1200"]]),
