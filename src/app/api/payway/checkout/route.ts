@@ -38,9 +38,9 @@ async function checkRateLimit(request: NextRequest): Promise<boolean> {
   const url = process.env.UPSTASH_REDIS_REST_URL;
   const token = process.env.UPSTASH_REDIS_REST_TOKEN;
   if (!url || !token) return false;
-  const ip = request.headers.get("x-nf-client-connection-ip")
-    ?? request.headers.get("cf-connecting-ip")
-    ?? request.headers.get("x-forwarded-for")?.split(",")[0]?.trim();
+  // Confiar únicamente en la IP suministrada por Netlify; los encabezados
+  // X-Forwarded-For / CF-Connecting-IP pueden falsificarse en accesos directos.
+  const ip = request.headers.get("x-nf-client-connection-ip");
   if (!ip || ip.length > 100) return false;
   const { createHash } = await import("node:crypto");
   const fingerprint = createHash("sha256").update(ip).digest("hex");
