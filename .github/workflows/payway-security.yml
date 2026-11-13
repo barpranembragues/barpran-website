@@ -1,0 +1,21 @@
+name: Payway security guards (offline)
+on:
+  pull_request:
+    paths:
+      - 'src/app/api/payway/**'
+      - 'src/app/tienda/**'
+      - 'tests/payway-security.test.cjs'
+      - '.github/workflows/payway-security.yml'
+  workflow_dispatch:
+jobs:
+  checkout-guard-tests:
+    runs-on: ubuntu-latest
+    permissions:
+      contents: read
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: '22'
+      - name: Run Payway checkout safety assertions (no external API calls)
+        run: node --test tests/payway-security.test.cjs
