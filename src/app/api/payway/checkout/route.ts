@@ -117,24 +117,16 @@ function positiveCoefficient(value?: string) {
   return Number.isFinite(coefficient) && coefficient > 1 ? coefficient : null;
 }
 
-function getRequestHost(request: NextRequest) {
-  const forwardedHost = request.headers.get("x-forwarded-host");
-  const host = forwardedHost ?? request.headers.get("host") ?? request.nextUrl.host;
-  return host.split(":")[0].toLowerCase();
-}
-
+// Evitar que encabezados como x-forwarded-host alteren el destino de cobro
+// o las URLs de retorno. Solo se permite dominio oficial de BARPRAN.
 function isProductionHost(request: NextRequest) {
-  const host = getRequestHost(request);
-  return host === "barpran.com.ar" || host === "www.barpran.com.ar";
+  const hostname = request.nextUrl.hostname.toLowerCase();
+  return hostname === "barpran.com.ar" || hostname === "www.barpran.com.ar";
 }
 
 function getBaseUrl(request: NextRequest) {
-  const forwardedHost = request.headers.get("x-forwarded-host");
-  const host = forwardedHost ?? request.headers.get("host");
-  const forwardedProto = request.headers.get("x-forwarded-proto");
-  const protocol = forwardedProto ?? (host?.includes("localhost") ? "http" : "https");
-
-  if (host) return `${protocol}://${host}`;
+  if (isProductionHost(request)) return "https://barpran.com.ar";
+  // Los despliegues de prueba usan su propio origen verificado por Next.js.
   return request.nextUrl.origin;
 }
 
@@ -164,6 +156,14 @@ export async function POST(request: NextRequest) {
   // Protecciones obligatorias: fail-closed si falta cualquier clave.
   if (!process.env.TURNSTILE_SECRET_KEY || !process.env.NEXT_PUBLIC_TURNSTILE_SITE_KEY
     || !process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) return pause();
+  // No crear enlaces reales si llega una petición al host no autorizado.
+  // Los previews permanecen en el circuito de prueba exclusivamente.
+  const hostname = request.nextUrl.hostname.toLowerCase();
+  if (!isProductionHost(request) && !hostname.endsWith(".netlify.app")
+    && hostname !== "localhost") return blocked(403, "Host no permitido");
+  const length = Number(request.headers.get("content-length") ?? "0");
+  if (!Number.isFinite(length) || length > 8192) return blocked(413, "Solicitud demasiado grande");
+
   // No consumir recursos externos ante formularios enviados desde otros sitios.
   const origin = request.headers.get("origin");
   if (origin) {
