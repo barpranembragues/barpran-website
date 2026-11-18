@@ -32,9 +32,9 @@ export default async function CompraExitosaPage({ searchParams }: SuccessPagePro
       <section className="frame py-16 md:py-24">
         <div className="mx-auto max-w-3xl border border-white/10 bg-white/[0.025] p-8 md:p-12">
           <p className="tech-label text-barpran">Payway · operación finalizada</p>
-          <h1 className="display mt-4 text-5xl md:text-7xl">Pago recibido</h1>
+          <h1 className="display mt-4 text-5xl md:text-7xl">Pago pendiente de verificación</h1>
           <p className="mt-6 text-base leading-7 text-ash">
-            Payway finalizó el flujo de pago. BARPRAN verificará el estado definitivo de la operación antes de entregar, preparar o despachar el pedido.
+            Regresaste desde Payway. Esto no confirma que el pago haya sido aprobado ni acreditado. BARPRAN verificará la operación en Payway antes de entregar, preparar o despachar el pedido.
           </p>
 
           {(concepto || formattedAmount) && (
@@ -56,7 +56,7 @@ export default async function CompraExitosaPage({ searchParams }: SuccessPagePro
               {formattedAmount && (
                 <div>
                   <p className="font-mono text-xs uppercase tracking-mega text-ash">
-                    {installments > 1 ? `Total financiado · ${installments} cuotas` : "Monto abonado"}
+                    {installments > 1 ? `Total financiado · ${installments} cuotas` : "Monto informado para el pago"}
                   </p>
                   <p className="mt-2 text-2xl font-bold">{formattedAmount}</p>
                 </div>
