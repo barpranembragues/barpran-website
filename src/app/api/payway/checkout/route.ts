@@ -117,14 +117,16 @@ function positiveCoefficient(value?: string) {
   return Number.isFinite(coefficient) && coefficient > 1 ? coefficient : null;
 }
 
-// El hostname de NextRequest puede ser un hostname interno de Netlify.
-// Solo el contexto de despliegue provisto por Netlify selecciona Payway real.
-function isProductionDeployment() {
-  return process.env.CONTEXT === "production";
+// En funciones de Netlify, nextUrl.hostname y CONTEXT pueden no reflejar
+// el dominio público de la solicitud. Validamos Host y Origin de forma estricta.
+// La validación criptográfica de Turnstile también comprueba hostname y action.
+function isOfficialHost(request: NextRequest) {
+  const host = request.headers.get("host")?.toLowerCase() ?? "";
+  return host === "barpran.com.ar" || host === "www.barpran.com.ar";
 }
 
 function getBaseUrl(request: NextRequest) {
-  if (isProductionDeployment()) return "https://barpran.com.ar";
+  if (isOfficialHost(request)) return "https://barpran.com.ar";
   return request.nextUrl.origin;
 }
 
@@ -156,16 +158,18 @@ export async function POST(request: NextRequest) {
     || !process.env.UPSTASH_REDIS_REST_URL || !process.env.UPSTASH_REDIS_REST_TOKEN) return pause();
   // No crear enlaces reales si llega una petición al host no autorizado.
   // Los previews permanecen en el circuito de prueba exclusivamente.
-  const hostname = request.nextUrl.hostname.toLowerCase();
-  if (!isProductionDeployment() && !hostname.endsWith(".netlify.app")
-    && hostname !== "localhost") return blocked(403, "Host no permitido");
+  const hostname = (request.headers.get("host") ?? "").toLowerCase();
+  const isPreviewHost = hostname.endsWith(".netlify.app");
+  const isLocalHost = hostname === "localhost" || hostname.startsWith("localhost:");
+  if (!isOfficialHost(request) && !isPreviewHost && !isLocalHost)
+    return blocked(403, "Host no permitido");
   const length = Number(request.headers.get("content-length") ?? "0");
   if (!Number.isFinite(length) || length > 8192) return blocked(413, "Solicitud demasiado grande");
 
   // No consumir recursos externos ante formularios enviados desde otros sitios.
   const origin = request.headers.get("origin");
   // No aceptar una solicitud de producción sin un origen HTTPS autorizado.
-  if (isProductionDeployment() && !origin) return blocked(403, "Origen requerido");
+  if (isOfficialHost(request) && !origin) return blocked(403, "Origen requerido");
   if (origin) {
     let source: URL;
     try { source = new URL(origin); } catch { return blocked(403, "Origen no permitido"); }
@@ -200,7 +204,7 @@ export async function POST(request: NextRequest) {
     return checkoutError(request, "cuotas");
   }
 
-  const production = isProductionDeployment();
+  const production = isOfficialHost(request);
   const publicKey = production
     ? process.env.NEXT_PUBLIC_PAYWAY_PUBLIC_KEY_PROD
     : process.env.NEXT_PUBLIC_PAYWAY_PUBLIC_KEY_TEST;
