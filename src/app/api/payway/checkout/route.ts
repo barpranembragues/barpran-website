@@ -117,16 +117,14 @@ function positiveCoefficient(value?: string) {
   return Number.isFinite(coefficient) && coefficient > 1 ? coefficient : null;
 }
 
-// Evitar que encabezados como x-forwarded-host alteren el destino de cobro
-// o las URLs de retorno. Solo se permite dominio oficial de BARPRAN.
-function isProductionHost(request: NextRequest) {
-  const hostname = request.nextUrl.hostname.toLowerCase();
-  return hostname === "barpran.com.ar" || hostname === "www.barpran.com.ar";
+// El hostname de NextRequest puede ser un hostname interno de Netlify.
+// Solo el contexto de despliegue provisto por Netlify selecciona Payway real.
+function isProductionDeployment() {
+  return process.env.CONTEXT === "production";
 }
 
 function getBaseUrl(request: NextRequest) {
-  if (isProductionHost(request)) return "https://barpran.com.ar";
-  // Los despliegues de prueba usan su propio origen verificado por Next.js.
+  if (isProductionDeployment()) return "https://barpran.com.ar";
   return request.nextUrl.origin;
 }
 
@@ -159,17 +157,22 @@ export async function POST(request: NextRequest) {
   // No crear enlaces reales si llega una petición al host no autorizado.
   // Los previews permanecen en el circuito de prueba exclusivamente.
   const hostname = request.nextUrl.hostname.toLowerCase();
-  if (!isProductionHost(request) && !hostname.endsWith(".netlify.app")
+  if (!isProductionDeployment() && !hostname.endsWith(".netlify.app")
     && hostname !== "localhost") return blocked(403, "Host no permitido");
   const length = Number(request.headers.get("content-length") ?? "0");
   if (!Number.isFinite(length) || length > 8192) return blocked(413, "Solicitud demasiado grande");
 
   // No consumir recursos externos ante formularios enviados desde otros sitios.
   const origin = request.headers.get("origin");
+  // No aceptar una solicitud de producción sin un origen HTTPS autorizado.
+  if (isProductionDeployment() && !origin) return blocked(403, "Origen requerido");
   if (origin) {
-    let source: string;
-    try { source = new URL(origin).hostname.toLowerCase(); } catch { return blocked(403, "Origen no permitido"); }
-    if (source !== "barpran.com.ar" && source !== "www.barpran.com.ar") return blocked(403, "Origen no permitido");
+    let source: URL;
+    try { source = new URL(origin); } catch { return blocked(403, "Origen no permitido"); }
+    if (source.protocol !== "https:" ||
+      (source.hostname.toLowerCase() !== "barpran.com.ar" &&
+       source.hostname.toLowerCase() !== "www.barpran.com.ar") ||
+      source.port) return blocked(403, "Origen no permitido");
   }
   if (!(await checkRateLimit(request))) return blocked(429, "Demasiados intentos. Contactá a BARPRAN.");
   const formData = await request.formData();
@@ -197,7 +200,7 @@ export async function POST(request: NextRequest) {
     return checkoutError(request, "cuotas");
   }
 
-  const production = isProductionHost(request);
+  const production = isProductionDeployment();
   const publicKey = production
     ? process.env.NEXT_PUBLIC_PAYWAY_PUBLIC_KEY_PROD
     : process.env.NEXT_PUBLIC_PAYWAY_PUBLIC_KEY_TEST;
